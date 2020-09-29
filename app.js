@@ -153,6 +153,12 @@ app.post('/push', express.json(), async (req, res) => {
 // Logging driver code. Note: For legacy compatibility, routing to `/` is enabled.
 // Try it using: `http PUT :3000 origin==test level==info <<<'testing log!'`
 app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
+
+	// Some types of logging messages are not allowed (PHI, etc.)
+	if (req.body.includes("Protected health data is inaccessible"))
+		return res.status(200).json({ "warning": "log message was ignored" })
+
+	// Clean up and save the log event to the database. 
     await Database.use("syslog").bulk({ docs: [{
         timestamp: new Date().toJSON(),
         origin: req.query.origin || 'unknown',
