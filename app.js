@@ -142,7 +142,7 @@ app.post('/push', express.json(), async (req, res) => {
 	try {
 		if (req.body['push_type'] === 'apns')
 			await APNSpush(P8, req.body['device_token'], req.body['payload'])
-		else if (req.body['type'] === 'gcm')
+		else if (req.body['push_type'] === 'gcm')
 			await GCMpush(GCM_AUTH, req.body['device_token'], req.body['payload'])
 		return res.status(200).json({})
 	} catch(e) {
