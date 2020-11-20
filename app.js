@@ -88,10 +88,15 @@ async function GCMpush(certificate, device, payload) {
 		})
 		request.on('data', (chunk) => data.push(chunk))
 		request.on('end', () => {
+			try {
 			let response = JSON.parse(data.join())
 			if (response.success == 0)
 				 reject(response)
 			else resolve(response)
+			} catch (error) {
+			console.log("Error sending notify---")
+		        }	
+				
 		})
 		request.write(buffer)
 		request.end()
