@@ -94,7 +94,7 @@ async function GCMpush(certificate, device, payload) {
 				 reject(response)
 			else resolve(response)
 			} catch (error) {
-			console.log("Error sending notify---")
+			console.log("Error sending notifications - Android")
 		        }	
 				
 		})
