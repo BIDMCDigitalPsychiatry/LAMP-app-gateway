@@ -1,12 +1,30 @@
 #!/usr/bin/env node
 const http2 = require("http2")
 const jwt = require("jsonwebtoken")
+const aws = require('aws-sdk')
 const express = require("express")
-const nano = require("nano")
-
-// The database and HTTP server.
-const Database = nano(process.env.CDB || "")
+const { response } = require("express")
 const app = express()
+
+// Construct the AWS objects.
+aws.config.update({
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY || "",
+		secretAccessKey: process.env.AWS_SECRET_KEY || ""
+	}
+})
+const CloudWatch = new aws.CloudWatchLogs({ region: process.env.AWS_CWL_REGION || "us-east-2" })
+const SES = new aws.SES({ region: process.env.AWS_SES_REGION || "us-east-1" })
+const SNS = new aws.SNS({ region: process.env.AWS_SNS_REGION || "us-east-1" })
+
+// Only for Slack support. Format: "XXXXXXXXX/XXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX".
+const SLACK_HOOK = process.env.SLACK_HOOK || ""
+
+// Only for sending emails through AWS SES.
+const AWS_SES_FROM = process.env.AWS_SES_FROM || "system@lamp.digital"
+
+// Configure the AWS CloudWatch log group and stream first (Format: "group/stream").
+const AWS_CWL_STREAM = (process.env.AWS_CWL_STREAM || "LAMP/Native").split('/')
 
 // API_KEYS is an optional array of allow-listed keys for request senders, 
 // stored as a comma-separatated list (i.e. "n1WHtGTpRByGjeOP,k6ToHy9lmUZB7LzZ")
@@ -36,19 +54,19 @@ async function APNSpush(certificate, device, payload) {
 	const TOKEN = jwt.sign({ 
 		iss: certificate.teamID, iat: Math.floor(Date.now() / 1000) - 1 
 	}, certificate.contents, {
-	    algorithm: "ES256",
-	    header: { alg: "ES256", kid: certificate.keyID }
+		algorithm: "ES256",
+		header: { alg: "ES256", kid: certificate.keyID }
 	})
-
+	
 	// Development: https://api.sandbox.push.apple.com:443
 	// Production: https://api.push.apple.com:443
-	const client = http2.connect("https://api.push.apple.com:443/")
+	const client = http2.connect("https://api.push.apple.com:443")
 	const buffer = Buffer.from(JSON.stringify(payload))
 	const request = client.request({
-	    [':method']: 'POST',
-	    [':path']: `/3/device/${device}`,
-	    "Content-Type": "application/json",
-	    "Content-Length": buffer.length,
+		[':method']: 'POST',
+		[':path']: `/3/device/${device}`,
+		"Content-Type": "application/json",
+		"Content-Length": buffer.length,
 		"Authorization": `Bearer ${TOKEN}`,
 		"apns-topic": certificate.bundleID,
 	})
@@ -73,10 +91,10 @@ async function GCMpush(certificate, device, payload) {
 		...payload, "to": device
 	}))
 	const request = client.request({
-	    [':method']: 'POST',
-	    [':path']: `/fcm/send`,
-	    "Content-Type": "application/json",
-	    "Content-Length": buffer.length,
+		[':method']: 'POST',
+		[':path']: `/fcm/send`,
+		"Content-Type": "application/json",
+		"Content-Length": buffer.length,
 		"Authorization": `Bearer ${certificate}`,
 	})
 	return new Promise((resolve, reject) => {
@@ -89,17 +107,98 @@ async function GCMpush(certificate, device, payload) {
 		request.on('data', (chunk) => data.push(chunk))
 		request.on('end', () => {
 			try {
-			let response = JSON.parse(data.join())
-			if (response.success == 0)
-			 reject(response)
-			else resolve(response)
+				let response = JSON.parse(data.join())
+				if (response.success == 0)
+					reject(response)
+				else resolve(response)
 			} catch (error) {
-			 reject(error)
-		        }	
+				reject(error)
+			}	
 		})
 		request.write(buffer)
 		request.end()
 	})
+}
+
+// Send an email through AWS SES.
+async function SESpush(email, payload) {
+	return SES.sendEmail({
+		Source: AWS_SES_FROM,
+		ReplyToAddresses: typeof payload.from === 'string' ? payload.from.split(','): [],
+		Destination: {
+			ToAddresses: [email],
+			CcAddresses: typeof payload.cc === 'string' ? payload.cc.split(','): [],
+		},
+		Message: {
+			Subject: {
+				Charset: 'UTF-8',
+				Data: typeof payload.subject === 'string' ? payload.subject: null,
+			},
+			Body: {
+				/*Text: typeof payload.body !== 'string' ? undefined : {
+					Charset: "UTF-8",
+					Data: payload.body
+				},*/
+				Html: typeof payload.body !== 'string' ? undefined : {
+					Charset: "UTF-8",
+					Data: payload.body
+				},
+			},
+		},
+	}).promise()
+}
+
+// Send a text message through AWS SNS.
+async function SNSpush(number, payload) {
+	return SNS.publish({
+		Message: payload.text,
+		PhoneNumber: number,
+	}).promise()
+}
+
+// Send a Slack message to a predefined channel/webhook.
+async function SLACKpush(message) {
+	const client = http2.connect(`https://hooks.slack.com:443`)
+	const buffer = Buffer.from(JSON.stringify({ text: message }))
+	const request = client.request({
+		[':method']: 'POST',
+		[':path']: `/services/${SLACK_HOOK}`,
+		"Content-Type": "application/json",
+		"Content-Length": buffer.length
+	})
+	return new Promise((resolve, reject) => {
+		let data = []
+		request.setEncoding('utf8')
+		request.on('response', (headers) => {
+			if (headers[':status'] !== 200)
+				reject()
+		})
+		request.on('data', (chunk) => data.push(chunk))
+		request.on('end', () => resolve(data.join()))
+		request.write(buffer)
+		request.end()
+	})
+}
+
+// Stream a CloudWatch log.
+async function LOGpush(message) {
+
+	// Get the next available log stream token to send the log with.
+	let streams = await CloudWatch.describeLogStreams({
+		logGroupName: AWS_CWL_STREAM[0],
+		logStreamNamePrefix: AWS_CWL_STREAM[1]
+	}).promise()
+	
+	// Clean up and save the log event to the database.
+	await CloudWatch.putLogEvents({
+		logGroupName: AWS_CWL_STREAM[0],
+		logStreamName: AWS_CWL_STREAM[1],
+		sequenceToken: streams.logStreams[0].uploadSequenceToken,
+		logEvents: [{
+			timestamp: Date.now(),
+			message: message
+		}]
+	}).promise()
 }
 
 // The utility function driver code.
@@ -127,27 +226,35 @@ async function main() {
 
 // The microservice driver code.
 app.post('/push', express.json(), async (req, res) => {
-
+	
 	// First verify each parameter type.
+	// Note: "push_type" can be embedded in "device_token" like so: "<push_type>:<device_token>".
 	let verify0 = API_KEYS.length === 0 || API_KEYS.includes(req.body['api_key'])
-	let verify1 = ["apns", "gcm"].includes(req.body['push_type'])
-	let verify2 = typeof req.body['device_token'] === "string"
+	let verify1 = typeof req.body['device_token'] === "string"
+	let verify2 = ["apns", "gcm", "mailto", "sms"].includes(req.body['push_type'])
+	let verify2a = verify1 && ["apns", "gcm", "mailto", "sms"].includes(req.body['device_token'].split(':')[0])
 	let verify3 = typeof req.body['payload'] === "object"
 	if (!verify0)
 		return res.status(400).json({ "error": "bad request: valid api_key is required" })
 	else if (!verify1)
-		return res.status(400).json({ "error": "bad request: push_type must be one of 'apns' or 'gcm'" })
-	else if (!verify2)
 		return res.status(400).json({ "error": "bad request: device_token must be a string" })
+	else if (!verify2 && !verify2a)
+		return res.status(400).json({ "error": "bad request: push_type must be one of ['apns', 'gcm', 'mailto', 'sms']" })
 	else if (!verify3)
 		return res.status(400).json({ "error": "bad request: payload must be an object" })
-
+	if (verify2a)
+		req.body['push_type'] = req.body['device_token'].split(':')[0]
+	
 	// We've verified the parameters, now invoke the push calls.
 	try {
 		if (req.body['push_type'] === 'apns')
 			await APNSpush(P8, req.body['device_token'], req.body['payload'])
 		else if (req.body['push_type'] === 'gcm')
 			await GCMpush(GCM_AUTH, req.body['device_token'], req.body['payload'])
+		else if (req.body['push_type'] === 'mailto')
+			await SESpush(req.body['device_token'], req.body['payload'])
+		else if (req.body['push_type'] === 'sms')
+			await SNSpush(req.body['device_token'], req.body['payload'])
 		return res.status(200).json({})
 	} catch(e) {
 		return res.status(400).json({ "error": e || "unknown error occurred" })
@@ -157,33 +264,27 @@ app.post('/push', express.json(), async (req, res) => {
 // Logging driver code. Note: For legacy compatibility, routing to `/` is enabled.
 // Try it using: `http PUT :3000 origin==test level==info <<<'testing log!'`
 app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
-
+	
 	// Some types of logging messages are not allowed (PHI, etc.)
-	if (req.body.includes("Protected health data is inaccessible"))
+	if (typeof req.body !== 'string' || req.body.includes("Protected health data is inaccessible"))
 		return res.status(200).json({ "warning": "log message was ignored" })
-
-	// Clean up and save the log event to the database. 
-    await Database.use("syslog").bulk({ docs: [{
-        timestamp: new Date().toJSON(),
-        origin: req.query.origin || 'unknown',
-        level: req.query.level || 'info',
-        message: (req.body || '').trim()
-    }]})
-    return res.status(200).json({})
+	
+	// Shortcut for sending a slack message instead of a log.
+	if (req.query.origin === '__SLACK__') {
+		let q = await SLACKpush((req.body || '').trim())
+		return res.status(200).json({ "destination": "slack" })
+	} else {
+		await LOGpush(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
+		return res.status(200).json({})
+	}
 })
 
-// If the syslog database has not been initialized, initialize it.
-async function _bootstrap_db() {
-	if (!(await Database.db.list()).includes("syslog")) {
-		console.log("Initializing Syslog database...")
-		await Database.db.create("syslog")
-	}
-	console.log("Syslog database operational.")
-}
+// Ping for healthchecking.
+app.get('/', (req, res) => res.status(200).json({ ok: true }))
+app.listen(process.env.PORT || 3000)
 
 // Verify our environment is set up correctly and run the driver code.
-if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
-	_bootstrap_db()
+/*if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
 	
 	// Start the HTTP server, or if running as a CLI, the driver function.
 	app.listen(process.env.PORT || 3000)
@@ -191,4 +292,4 @@ if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
 } else {
 	console.error("no APNS or GCM authorization specified")
 	process.exit(-1)
-}
+}*/
