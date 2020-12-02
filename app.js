@@ -242,8 +242,11 @@ app.post('/push', express.json(), async (req, res) => {
 		return res.status(400).json({ "error": "bad request: push_type must be one of ['apns', 'gcm', 'mailto', 'sms']" })
 	else if (!verify3)
 		return res.status(400).json({ "error": "bad request: payload must be an object" })
-	if (verify2a)
-		req.body['push_type'] = req.body['device_token'].split(':')[0]
+	if (verify2a) {
+		let pieces = req.body['device_token'].split(':')
+		req.body['push_type'] = pieces[0]
+		req.body['device_token'] = pieces[1]
+	}
 	
 	// We've verified the parameters, now invoke the push calls.
 	try {
