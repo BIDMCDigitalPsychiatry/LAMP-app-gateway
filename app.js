@@ -180,25 +180,44 @@ async function SLACKpush(message) {
 	})
 }
 
+const LOG_BUFFER = {}
+let FLUSH_TIMER = null
+
 // Stream a CloudWatch log.
 async function LOGpush(stream, message) {
 
-	// Get the next available log stream token to send the log with.
-	let streams = await CloudWatch.describeLogStreams({
-		logGroupName: AWS_CWL_GROUP,
-		logStreamNamePrefix: stream
-	}).promise()
-	
-	// Clean up and save the log event to the database.
-	await CloudWatch.putLogEvents({
-		logGroupName: AWS_CWL_GROUP,
-		logStreamName: stream,
-		sequenceToken: streams.logStreams[0].uploadSequenceToken,
-		logEvents: [{
-			timestamp: Date.now(),
-			message: message
-		}]
-	}).promise()
+	// First-time initialization to flush logs; skip any stream buffers that are empty.
+	if (FLUSH_TIMER === null) {
+		FLUSH_TIMER = setInterval(() => { 
+			for (let _stream of Object.keys(LOG_BUFFER)) {
+				if (Array.isArray(LOG_BUFFER[_stream]) && LOG_BUFFER[_stream].length > 0) {
+
+					// Get the next available log stream token to send the log with.
+					let streams = await CloudWatch.describeLogStreams({
+						logGroupName: AWS_CWL_GROUP,
+						logStreamNamePrefix: _stream
+					}).promise()
+					
+					// Clean up and save the log event to the database.
+					await CloudWatch.putLogEvents({
+						logGroupName: AWS_CWL_GROUP,
+						logStreamName: _stream,
+						sequenceToken: streams.logStreams[0].uploadSequenceToken,
+						logEvents: LOG_BUFFER[stream_name]
+					}).promise()
+
+					// Clear the buffer.
+					LOG_BUFFER[stream_name] = []
+				}
+			}
+			console.dir({ flushed: LOG_BUFFER })
+		}, 5 * 1000 /* 5s */)
+	}
+
+	// Add the log to the buffer so it'll be flushed by the timer loop.
+	if (!Array.isArray(LOG_BUFFER[stream]))
+		LOG_BUFFER[stream] = []
+	LOG_BUFFER[stream].push({ timestamp: Date.now(), message: message })
 }
 
 // The utility function driver code.
@@ -284,10 +303,9 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
 
 // Ping for healthchecking.
 app.get('/', (req, res) => res.status(200).json({ ok: true }))
-app.listen(process.env.PORT || 3000)
 
 // Verify our environment is set up correctly and run the driver code.
-/*if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
+if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
 	
 	// Start the HTTP server, or if running as a CLI, the driver function.
 	app.listen(process.env.PORT || 3000)
@@ -295,4 +313,4 @@ app.listen(process.env.PORT || 3000)
 } else {
 	console.error("no APNS or GCM authorization specified")
 	process.exit(-1)
-}*/
+}
