@@ -188,7 +188,7 @@ async function LOGpush(stream, message) {
 
 	// First-time initialization to flush logs; skip any stream buffers that are empty.
 	if (FLUSH_TIMER === null) {
-		FLUSH_TIMER = setInterval(() => { 
+		FLUSH_TIMER = setInterval(async () => { 
 			for (let _stream of Object.keys(LOG_BUFFER)) {
 				if (Array.isArray(LOG_BUFFER[_stream]) && LOG_BUFFER[_stream].length > 0) {
 
