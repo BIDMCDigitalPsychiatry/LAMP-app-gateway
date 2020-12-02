@@ -23,8 +23,8 @@ const SLACK_HOOK = process.env.SLACK_HOOK || ""
 // Only for sending emails through AWS SES.
 const AWS_SES_FROM = process.env.AWS_SES_FROM || "system@lamp.digital"
 
-// Configure the AWS CloudWatch log group and stream first (Format: "group/stream").
-const AWS_CWL_STREAM = (process.env.AWS_CWL_STREAM || "LAMP/Native").split('/')
+// Configure the AWS CloudWatch log group that will house all the log streams.
+const AWS_CWL_GROUP = process.env.AWS_CWL_GROUP || "LAMP"
 
 // API_KEYS is an optional array of allow-listed keys for request senders, 
 // stored as a comma-separatated list (i.e. "n1WHtGTpRByGjeOP,k6ToHy9lmUZB7LzZ")
@@ -181,18 +181,18 @@ async function SLACKpush(message) {
 }
 
 // Stream a CloudWatch log.
-async function LOGpush(message) {
+async function LOGpush(stream, message) {
 
 	// Get the next available log stream token to send the log with.
 	let streams = await CloudWatch.describeLogStreams({
-		logGroupName: AWS_CWL_STREAM[0],
-		logStreamNamePrefix: AWS_CWL_STREAM[1]
+		logGroupName: AWS_CWL_GROUP,
+		logStreamNamePrefix: stream
 	}).promise()
 	
 	// Clean up and save the log event to the database.
 	await CloudWatch.putLogEvents({
-		logGroupName: AWS_CWL_STREAM[0],
-		logStreamName: AWS_CWL_STREAM[1],
+		logGroupName: AWS_CWL_GROUP,
+		logStreamName: stream,
 		sequenceToken: streams.logStreams[0].uploadSequenceToken,
 		logEvents: [{
 			timestamp: Date.now(),
@@ -270,11 +270,11 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
 		return res.status(200).json({ "warning": "log message was ignored" })
 	
 	// Shortcut for sending a slack message instead of a log.
-	if (req.query.origin === '__SLACK__') {
+	if (req.query.stream === 'slack') {
 		let q = await SLACKpush((req.body || '').trim())
 		return res.status(200).json({ "destination": "slack" })
 	} else {
-		await LOGpush(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
+		await LOGpush(req.query.stream || 'core', `[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
 		return res.status(200).json({})
 	}
 })
