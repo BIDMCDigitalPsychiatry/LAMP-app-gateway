@@ -203,11 +203,11 @@ async function LOGpush(stream, message) {
 						logGroupName: AWS_CWL_GROUP,
 						logStreamName: _stream,
 						sequenceToken: streams.logStreams[0].uploadSequenceToken,
-						logEvents: LOG_BUFFER[stream_name]
+						logEvents: LOG_BUFFER[_stream]
 					}).promise()
 
 					// Clear the buffer.
-					LOG_BUFFER[stream_name] = []
+					LOG_BUFFER[_stream] = []
 				}
 			}
 			console.dir({ flushed: LOG_BUFFER })
