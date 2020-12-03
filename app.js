@@ -8,14 +8,12 @@ const app = express()
 
 // Construct the AWS objects.
 aws.config.update({
+	region: process.env.AWS_SES_REGION || "us-east-1",
 	credentials: {
 		accessKeyId: process.env.AWS_ACCESS_KEY || "",
 		secretAccessKey: process.env.AWS_SECRET_KEY || ""
 	}
 })
-const CloudWatch = new aws.CloudWatchLogs({ region: process.env.AWS_CWL_REGION || "us-east-2" })
-const SES = new aws.SES({ region: process.env.AWS_SES_REGION || "us-east-1" })
-const SNS = new aws.SNS({ region: process.env.AWS_SNS_REGION || "us-east-1" })
 
 // Only for Slack support. Format: "XXXXXXXXX/XXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX".
 const SLACK_HOOK = process.env.SLACK_HOOK || ""
@@ -180,46 +178,6 @@ async function SLACKpush(message) {
 	})
 }
 
-const LOG_BUFFER = {}
-let FLUSH_TIMER = null
-
-// Stream a CloudWatch log.
-async function LOGpush(stream, message) {
-
-	// First-time initialization to flush logs; skip any stream buffers that are empty.
-	if (FLUSH_TIMER === null) {
-		FLUSH_TIMER = setInterval(async () => { 
-			for (let _stream of Object.keys(LOG_BUFFER)) {
-				if (Array.isArray(LOG_BUFFER[_stream]) && LOG_BUFFER[_stream].length > 0) {
-
-					// Get the next available log stream token to send the log with.
-					let streams = await CloudWatch.describeLogStreams({
-						logGroupName: AWS_CWL_GROUP,
-						logStreamNamePrefix: _stream
-					}).promise()
-					
-					// Clean up and save the log event to the database.
-					await CloudWatch.putLogEvents({
-						logGroupName: AWS_CWL_GROUP,
-						logStreamName: _stream,
-						sequenceToken: streams.logStreams[0].uploadSequenceToken,
-						logEvents: LOG_BUFFER[_stream]
-					}).promise()
-
-					// Clear the buffer.
-					LOG_BUFFER[_stream] = []
-				}
-			}
-			console.dir({ flushed: LOG_BUFFER })
-		}, 5 * 1000 /* 5s */)
-	}
-
-	// Add the log to the buffer so it'll be flushed by the timer loop.
-	if (!Array.isArray(LOG_BUFFER[stream]))
-		LOG_BUFFER[stream] = []
-	LOG_BUFFER[stream].push({ timestamp: Date.now(), message: message })
-}
-
 // The utility function driver code.
 async function main() {
 	if (arguments.length < 3 || !['apns', 'gcm'].includes(arguments[0])) {
@@ -296,7 +254,7 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
 		let q = await SLACKpush((req.body || '').trim())
 		return res.status(200).json({ "destination": "slack" })
 	} else {
-		await LOGpush(req.query.stream || 'core', `[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
+		console.log(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
 		return res.status(200).json({})
 	}
 })
