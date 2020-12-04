@@ -14,15 +14,14 @@ aws.config.update({
 		secretAccessKey: process.env.AWS_SECRET_KEY || ""
 	}
 })
-
+const SES = new aws.SES()		
+const SNS = new aws.SNS()
+ 
 // Only for Slack support. Format: "XXXXXXXXX/XXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX".
 const SLACK_HOOK = process.env.SLACK_HOOK || ""
 
 // Only for sending emails through AWS SES.
 const AWS_SES_FROM = process.env.AWS_SES_FROM || "system@lamp.digital"
-
-// Configure the AWS CloudWatch log group that will house all the log streams.
-const AWS_CWL_GROUP = process.env.AWS_CWL_GROUP || "LAMP"
 
 // API_KEYS is an optional array of allow-listed keys for request senders, 
 // stored as a comma-separatated list (i.e. "n1WHtGTpRByGjeOP,k6ToHy9lmUZB7LzZ")
