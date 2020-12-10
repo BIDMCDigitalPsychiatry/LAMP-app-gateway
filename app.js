@@ -54,6 +54,7 @@ async function APNSpush(certificate, device, payload) {
 		algorithm: "ES256",
 		header: { alg: "ES256", kid: certificate.keyID }
 	})
+	const buffer = Buffer.from(JSON.stringify(payload))
 	const HEADERS = {
 		[':method']: 'POST',
 		[':path']: `/3/device/${device}`,
@@ -70,7 +71,6 @@ async function APNSpush(certificate, device, payload) {
 	// Development: https://api.sandbox.push.apple.com:443
 	// Production: https://api.push.apple.com:443
 	const client = http2.connect("https://api.push.apple.com:443")
-	const buffer = Buffer.from(JSON.stringify(payload))
 	const request = client.request(JSON.parse(JSON.stringify(HEADERS)))
 	return new Promise((resolve, reject) => {
 		let data = []
