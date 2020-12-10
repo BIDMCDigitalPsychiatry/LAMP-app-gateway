@@ -54,19 +54,24 @@ async function APNSpush(certificate, device, payload) {
 		algorithm: "ES256",
 		header: { alg: "ES256", kid: certificate.keyID }
 	})
-	
-	// Development: https://api.sandbox.push.apple.com:443
-	// Production: https://api.push.apple.com:443
-	const client = http2.connect("https://api.push.apple.com:443")
-	const buffer = Buffer.from(JSON.stringify(payload))
-	const request = client.request({
+	const HEADERS = {
 		[':method']: 'POST',
 		[':path']: `/3/device/${device}`,
 		"Content-Type": "application/json",
 		"Content-Length": buffer.length,
 		"Authorization": `Bearer ${TOKEN}`,
 		"apns-topic": certificate.bundleID,
-	})
+		"apns-id": (payload['aps'] || {})['id'],
+		"apns-push-type": (payload['aps'] || {})['push-type'],
+		"apns-expiration": (payload['aps'] || {})['expiration'],
+		"apns-collapse-id": (payload['aps'] || {})['collapse-id'],
+	}
+	
+	// Development: https://api.sandbox.push.apple.com:443
+	// Production: https://api.push.apple.com:443
+	const client = http2.connect("https://api.push.apple.com:443")
+	const buffer = Buffer.from(JSON.stringify(payload))
+	const request = client.request(JSON.parse(JSON.stringify(HEADERS)))
 	return new Promise((resolve, reject) => {
 		let data = []
 		request.setEncoding('utf8')
