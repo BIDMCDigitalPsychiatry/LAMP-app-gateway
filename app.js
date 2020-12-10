@@ -47,7 +47,13 @@ const P8 = {
 }
 
 // Send an APNS push using `certificate` to `device` containing `payload`.
-async function APNSpush(certificate, device, payload) {
+async function APNSpush(certificate, device, payload, deviceType=0) {
+	//set default push type as alert for deviceType=0 (for phone)
+	let  apns_push_type = "alert"	
+	if(deviceType==1) {
+	// set push type as background for deviceType=1 (for watch)
+	apns_push_type = "background"
+	}
 	const TOKEN = jwt.sign({ 
 		iss: certificate.teamID, iat: Math.floor(Date.now() / 1000) - 1 
 	}, certificate.contents, {
@@ -66,6 +72,8 @@ async function APNSpush(certificate, device, payload) {
 		"Content-Length": buffer.length,
 		"Authorization": `Bearer ${TOKEN}`,
 		"apns-topic": certificate.bundleID,
+		"apns-collapse-id":payload.notificationId, //for grouping notifications, required for autoremoval after expiry
+		"apns-push-type":apns_push_type //"alert" for phone | "background" for watch
 	})
 	return new Promise((resolve, reject) => {
 		let data = []
@@ -226,8 +234,9 @@ app.post('/push', express.json(), async (req, res) => {
 	
 	// We've verified the parameters, now invoke the push calls.
 	try {
+		
 		if (req.body['push_type'] === 'apns')
-			await APNSpush(P8, req.body['device_token'], req.body['payload'])
+			await APNSpush(P8, req.body['device_token'], req.body['payload'], req.body['deviceType'])//deviceType to identify watch or phone.It can be 0-phone or 1-watch
 		else if (req.body['push_type'] === 'gcm')
 			await GCMpush(GCM_AUTH, req.body['device_token'], req.body['payload'])
 		else if (req.body['push_type'] === 'mailto')
