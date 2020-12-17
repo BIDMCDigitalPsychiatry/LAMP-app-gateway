@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "eval $(egrep -v '^#' .env | xargs -d '\n') node app.js"
   },
   "dependencies": {
     "aws-sdk": "^2.802.0",

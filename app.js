@@ -40,9 +40,9 @@ const GCM_AUTH = process.env.GCM_AUTH || ""
 // DO NOT MODIFY THIS VARIABLE. See the above section instead.
 // This certificate is constructed from the above APNS_P8 and APNS_AUTH.
 const P8 = {
-	teamID: APNS_P8.split("_")[0],
-	bundleID: APNS_P8.split("_")[1],
-	keyID: (APNS_P8.split("_")[2] || "").split(".")[0],
+	teamID: APNS_P8.split("_", 3)[0],
+	bundleID: APNS_P8.split("_", 3)[1],
+	keyID: (APNS_P8.split("_", 3)[2] || "").split(".", 1)[0],
 	contents: `-----BEGIN PRIVATE KEY-----\n${(APNS_AUTH.match(/.{1,64}/g) || []).join("\n")}\n-----END PRIVATE KEY-----`
 }
 
@@ -213,7 +213,7 @@ app.post('/push', express.json(), async (req, res) => {
 	let verify0 = API_KEYS.length === 0 || API_KEYS.includes(req.body['api_key'])
 	let verify1 = typeof req.body['device_token'] === "string"
 	let verify2 = ["apns", "gcm", "mailto", "sms"].includes(req.body['push_type'])
-	let verify2a = verify1 && ["apns", "gcm", "mailto", "sms"].includes(req.body['device_token'].split(':')[0])
+	let verify2a = verify1 && ["apns", "gcm", "mailto", "sms"].includes(req.body['device_token'].split(/:(.+)/, 2)[0])
 	let verify3 = typeof req.body['payload'] === "object"
 	if (!verify0)
 		return res.status(400).json({ "error": "bad request: valid api_key is required" })
@@ -224,7 +224,7 @@ app.post('/push', express.json(), async (req, res) => {
 	else if (!verify3)
 		return res.status(400).json({ "error": "bad request: payload must be an object" })
 	if (verify2a) {
-		let pieces = req.body['device_token'].split(':')
+		let pieces = req.body['device_token'].split(/:(.+)/, 2)
 		req.body['push_type'] = pieces[0]
 		req.body['device_token'] = pieces[1]
 	}
