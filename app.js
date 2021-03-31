@@ -162,7 +162,7 @@ async function SNSpush(number, payload) {
 // Send a Slack message to a predefined channel/webhook.
 async function SLACKpush(hook, message) {
 	const client = http2.connect(`https://hooks.slack.com:443`)
-	const buffer = Buffer.from(JSON.stringify({ text: message }))
+	const buffer = Buffer.from(JSON.stringify({ text: message.content || "<no message body>" }))
 	const request = client.request({
 		[':method']: 'POST',
 		[':path']: `/services/${hook}`,
@@ -235,7 +235,7 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
 	
 	// Shortcut for sending a slack message instead of a log. [DEPRECATED]
 	if (req.query.stream === 'slack') {
-		let q = await SLACKpush(SLACK_HOOK, (req.body || '').trim())
+		let q = await SLACKpush(SLACK_HOOK, { content: (req.body || '').trim() })
 		return res.status(200).json({ "destination": "slack" })
 	} else {
 		console.log(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
