@@ -17,6 +17,7 @@ aws.config.update({
 const SES = new aws.SES()		
 const SNS = new aws.SNS()
  
+// [DEPRECATED] Use the `/push` endpoint with a `slack:{hook}` device token.
 // Only for Slack support. Format: "XXXXXXXXX/XXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX".
 const SLACK_HOOK = process.env.SLACK_HOOK || ""
 
@@ -159,12 +160,12 @@ async function SNSpush(number, payload) {
 }
 
 // Send a Slack message to a predefined channel/webhook.
-async function SLACKpush(message) {
+async function SLACKpush(hook, message) {
 	const client = http2.connect(`https://hooks.slack.com:443`)
 	const buffer = Buffer.from(JSON.stringify({ text: message }))
 	const request = client.request({
 		[':method']: 'POST',
-		[':path']: `/services/${SLACK_HOOK}`,
+		[':path']: `/services/${hook}`,
 		"Content-Type": "application/json",
 		"Content-Length": buffer.length
 	})
@@ -181,6 +182,69 @@ async function SLACKpush(message) {
 		request.end()
 	})
 }
+
+// The microservice driver code.
+app.post('/push', express.json(), async (req, res) => {
+	
+	// First verify each parameter type.
+	// Note: "push_type" can be embedded in "device_token" like so: "<push_type>:<device_token>".
+	let verify0 = API_KEYS.length === 0 || API_KEYS.includes(req.body['api_key'])
+	let verify1 = typeof req.body['device_token'] === "string"
+	let verify2 = ["apns", "gcm", "mailto", "sms", "slack"].includes(req.body['push_type'])
+	let verify2a = verify1 && ["apns", "gcm", "mailto", "sms", "slack"].includes(req.body['device_token'].split(/:(.+)/, 2)[0])
+	let verify3 = typeof req.body['payload'] === "object"
+	if (!verify0)
+		return res.status(400).json({ "error": "bad request: valid api_key is required" })
+	else if (!verify1)
+		return res.status(400).json({ "error": "bad request: device_token must be a string" })
+	else if (!verify2 && !verify2a)
+		return res.status(400).json({ "error": "bad request: push_type must be one of ['apns', 'gcm', 'mailto', 'sms', 'slack']" })
+	else if (!verify3)
+		return res.status(400).json({ "error": "bad request: payload must be an object" })
+	if (verify2a) {
+		let pieces = req.body['device_token'].split(/:(.+)/, 2)
+		req.body['push_type'] = pieces[0]
+		req.body['device_token'] = pieces[1]
+	}
+	
+	// We've verified the parameters, now invoke the push calls.
+	try {
+		if (req.body['push_type'] === 'apns')
+			await APNSpush(P8, req.body['device_token'], req.body['payload'])
+		else if (req.body['push_type'] === 'gcm')
+			await GCMpush(GCM_AUTH, req.body['device_token'], req.body['payload'])
+		else if (req.body['push_type'] === 'mailto')
+			await SESpush(req.body['device_token'], req.body['payload'])
+		else if (req.body['push_type'] === 'sms')
+			await SNSpush(req.body['device_token'], req.body['payload'])
+		else if (req.body['push_type'] === 'slack')
+			await SLACKpush(req.body['device_token'], req.body['payload'])
+		return res.status(200).json({})
+	} catch(e) {
+		return res.status(400).json({ "error": e || "unknown error occurred" })
+	}
+})
+
+// Logging driver code. Note: For legacy compatibility, routing to `/` is enabled.
+// Try it using: `http PUT :3000 origin==test level==info <<<'testing log!'`
+app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
+	
+	// Some types of logging messages are not allowed (PHI, etc.)
+	if (typeof req.body !== 'string' || req.body.includes("Protected health data is inaccessible"))
+		return res.status(200).json({ "warning": "log message was ignored" })
+	
+	// Shortcut for sending a slack message instead of a log. [DEPRECATED]
+	if (req.query.stream === 'slack') {
+		let q = await SLACKpush(SLACK_HOOK, (req.body || '').trim())
+		return res.status(200).json({ "destination": "slack" })
+	} else {
+		console.log(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
+		return res.status(200).json({})
+	}
+})
+
+// Ping for healthchecks.
+app.get('/', (req, res) => res.status(200).json({ ok: true }))
 
 // The utility function driver code.
 async function main() {
@@ -204,67 +268,6 @@ async function main() {
 		}
 	}	
 }
-
-// The microservice driver code.
-app.post('/push', express.json(), async (req, res) => {
-	
-	// First verify each parameter type.
-	// Note: "push_type" can be embedded in "device_token" like so: "<push_type>:<device_token>".
-	let verify0 = API_KEYS.length === 0 || API_KEYS.includes(req.body['api_key'])
-	let verify1 = typeof req.body['device_token'] === "string"
-	let verify2 = ["apns", "gcm", "mailto", "sms"].includes(req.body['push_type'])
-	let verify2a = verify1 && ["apns", "gcm", "mailto", "sms"].includes(req.body['device_token'].split(/:(.+)/, 2)[0])
-	let verify3 = typeof req.body['payload'] === "object"
-	if (!verify0)
-		return res.status(400).json({ "error": "bad request: valid api_key is required" })
-	else if (!verify1)
-		return res.status(400).json({ "error": "bad request: device_token must be a string" })
-	else if (!verify2 && !verify2a)
-		return res.status(400).json({ "error": "bad request: push_type must be one of ['apns', 'gcm', 'mailto', 'sms']" })
-	else if (!verify3)
-		return res.status(400).json({ "error": "bad request: payload must be an object" })
-	if (verify2a) {
-		let pieces = req.body['device_token'].split(/:(.+)/, 2)
-		req.body['push_type'] = pieces[0]
-		req.body['device_token'] = pieces[1]
-	}
-	
-	// We've verified the parameters, now invoke the push calls.
-	try {
-		if (req.body['push_type'] === 'apns')
-			await APNSpush(P8, req.body['device_token'], req.body['payload'])
-		else if (req.body['push_type'] === 'gcm')
-			await GCMpush(GCM_AUTH, req.body['device_token'], req.body['payload'])
-		else if (req.body['push_type'] === 'mailto')
-			await SESpush(req.body['device_token'], req.body['payload'])
-		else if (req.body['push_type'] === 'sms')
-			await SNSpush(req.body['device_token'], req.body['payload'])
-		return res.status(200).json({})
-	} catch(e) {
-		return res.status(400).json({ "error": e || "unknown error occurred" })
-	}
-})
-
-// Logging driver code. Note: For legacy compatibility, routing to `/` is enabled.
-// Try it using: `http PUT :3000 origin==test level==info <<<'testing log!'`
-app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
-	
-	// Some types of logging messages are not allowed (PHI, etc.)
-	if (typeof req.body !== 'string' || req.body.includes("Protected health data is inaccessible"))
-		return res.status(200).json({ "warning": "log message was ignored" })
-	
-	// Shortcut for sending a slack message instead of a log.
-	if (req.query.stream === 'slack') {
-		let q = await SLACKpush((req.body || '').trim())
-		return res.status(200).json({ "destination": "slack" })
-	} else {
-		console.log(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`)
-		return res.status(200).json({})
-	}
-})
-
-// Ping for healthchecking.
-app.get('/', (req, res) => res.status(200).json({ ok: true }))
 
 // Verify our environment is set up correctly and run the driver code.
 if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
