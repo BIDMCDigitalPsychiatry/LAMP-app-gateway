@@ -6,7 +6,7 @@ const express = require("express")
 const cors = require("cors")
 const { response } = require("express")
 const app = express()
-app.use(cors())
+app.use(cors({origin:"*"}))
 // Construct the AWS objects.
 aws.config.update({
 	region: process.env.AWS_SES_REGION || "us-east-1",
