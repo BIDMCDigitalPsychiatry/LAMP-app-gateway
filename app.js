@@ -3,9 +3,10 @@ const http2 = require("http2")
 const jwt = require("jsonwebtoken")
 const aws = require('aws-sdk')
 const express = require("express")
+const cors = require("cors")
 const { response } = require("express")
 const app = express()
-
+app.use(cors())
 // Construct the AWS objects.
 aws.config.update({
 	region: process.env.AWS_SES_REGION || "us-east-1",
