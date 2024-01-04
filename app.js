@@ -90,13 +90,13 @@ async function APNSpush(certificate, device, payload) {
 
 // Send a Firebase (Google) push notification using `certificate` to the specified `device`.
 async function GCMpush(certificate, device, payload) {
-	const client = http2.connect("https://fcm.googleapis.com:443")
-	const buffer = Buffer.from(JSON.stringify({
-		...payload, "to": device
-	}))
+	const client = http2.connect("https://fcm.googleapis.com:443/v1/projects/api-6882780734960683553-445906")
+	const buffer = Buffer.from(JSON.stringify({message:{
+		...payload, "token": device
+	}}))
 	const request = client.request({
 		[':method']: 'POST',
-		[':path']: `/fcm/send`,
+		[':path']: `/messages:send`,
 		"Content-Type": "application/json",
 		"Content-Length": buffer.length,
 		"Authorization": `Bearer ${certificate}`,
