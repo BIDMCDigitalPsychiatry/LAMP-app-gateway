@@ -72,7 +72,7 @@ async function APNSpush(certificate, device, payload) {
 	
 	// Development: https://api.sandbox.push.apple.com:443
 	// Production: https://api.push.apple.com:443
-	const client = http2.connect("https://api.sandbox.push.apple.com:443")
+	const client = http2.connect("https://api.push.apple.com:443")
 	const request = client.request(JSON.parse(JSON.stringify(HEADERS)))
 	return new Promise((resolve, reject) => {
 		let data = []
