@@ -308,6 +308,7 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
 
 // Ping for healthchecks.
 app.get('/', (req, res) => res.status(200).json({ ok: true }))
+app.get("/metrics", (req, res) => res.status(200).json({ ok: true }).end());
 app.get("/healthz", (req, res) => res.status(200).json({ ok: true }).end());
 app.get("/readyz", (req, res) => res.status(200).json({ ok: true }).end());
 
