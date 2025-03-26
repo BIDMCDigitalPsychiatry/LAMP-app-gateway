@@ -1,7 +1,10 @@
-FROM node:17.9.0-alpine3.14
+# Use current Node LTS (Alpine) as base image
+FROM node:22-alpine3.21
+
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
+
 #Install ca-certificates package
 RUN apk update && apk add --no-cache wget ca-certificates
 
