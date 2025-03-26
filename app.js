@@ -21,6 +21,14 @@ process.on("uncaughtException", (error) => {
 });
 
 //=============================================================================
+// Helper Functions
+//=============================================================================
+
+function isEmpty(str) {
+  return !str || str.length === 0;
+}
+
+//=============================================================================
 // Config
 //=============================================================================
 
@@ -65,6 +73,13 @@ const P8 = {
 }
 
 const PORT = parseInt(process.env.PORT || "3000");
+
+// Validate Configuration
+
+if (isEmpty(APNS_P8) || isEmpty(APNS_AUTH) || isEmpty(GCM_AUTH)) {
+  console.error("Missing required environment viriable(s)");
+  process.exit(-1);
+}
 
 //=============================================================================
 // Gateway Implementation
@@ -299,13 +314,9 @@ async function main() {
 // Run
 //=============================================================================
 
-// Verify our environment is set up correctly and run the driver code.
-if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
-	
-	// Start the HTTP server, or if running as a CLI, the driver function.
-	app.listen(PORT);
-	//main(...process.argv.slice(2))
-} else {
-	console.error("no APNS or GCM authorization specified")
-	process.exit(-1)
-}
+console.log("LAMP - App Gateway");
+const server = app.listen(PORT, () => {
+  const { address, port } = server.address();
+  console.log(`Listening on ${address}:${port}`);
+});
+//main(...process.argv.slice(2))
