@@ -5,9 +5,11 @@ const aws = require('aws-sdk')
 const express = require("express")
 const cors = require("cors")
 const { response } = require("express")
-const app = express()
-app.use(cors({origin:"*"}))
-// Construct the AWS objects.
+
+//=============================================================================
+// Config
+//=============================================================================
+
 aws.config.update({
 	region: process.env.AWS_SES_REGION || "us-east-1",
 	credentials: {
@@ -17,7 +19,7 @@ aws.config.update({
 })
 const SES = new aws.SES()		
 const SNS = new aws.SNS()
- 
+
 // [DEPRECATED] Use the `/push` endpoint with a `slack:{hook}` device token.
 // Only for Slack support. Format: "XXXXXXXXX/XXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX".
 const SLACK_HOOK = process.env.SLACK_HOOK || ""
@@ -49,6 +51,13 @@ const P8 = {
 }
 
 const PORT = parseInt(process.env.PORT || "3000");
+
+//=============================================================================
+// Gateway Implementation
+//=============================================================================
+
+const app = express()
+app.use(cors({origin:"*"}))
 
 // Send an APNS push using `certificate` to `device` containing `payload`.
 async function APNSpush(certificate, device, payload) {
@@ -271,6 +280,10 @@ async function main() {
 		}
 	}	
 }
+
+//=============================================================================
+// Run
+//=============================================================================
 
 // Verify our environment is set up correctly and run the driver code.
 if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
