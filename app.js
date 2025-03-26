@@ -48,6 +48,8 @@ const P8 = {
 	contents: `-----BEGIN PRIVATE KEY-----\n${(APNS_AUTH.match(/.{1,64}/g) || []).join("\n")}\n-----END PRIVATE KEY-----`
 }
 
+const PORT = parseInt(process.env.PORT || "3000");
+
 // Send an APNS push using `certificate` to `device` containing `payload`.
 async function APNSpush(certificate, device, payload) {
 	const TOKEN = jwt.sign({ 
@@ -274,7 +276,7 @@ async function main() {
 if (APNS_P8.length > 0 && APNS_AUTH.length > 0 && GCM_AUTH.length > 0) {
 	
 	// Start the HTTP server, or if running as a CLI, the driver function.
-	app.listen(process.env.PORT || 3000)
+	app.listen(PORT);
 	//main(...process.argv.slice(2))
 } else {
 	console.error("no APNS or GCM authorization specified")

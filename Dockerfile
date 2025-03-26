@@ -11,5 +11,4 @@ RUN wget -O /usr/local/share/ca-certificates/comodoca.crt "https://comodoca.my.s
 #Update the certificate store
 RUN update-ca-certificates
 COPY . .
-EXPOSE 3000
 CMD [ "node", "app.js" ]
