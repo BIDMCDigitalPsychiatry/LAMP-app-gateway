@@ -74,6 +74,28 @@ const P8 = {
 
 const PORT = parseInt(process.env.PORT || "3000");
 
+// ---------------------
+// Shutdown Grace Period
+//
+// Definition: the time between when the server stops accepting new requests and
+//   when in-flight requests are forcibly terminated.
+//
+// Default: 2s Note: In our ECS environments we set this as close as is
+// reasonable to the ECS grace period (30s). Other environments should consider
+// a similar heuristic.
+//
+// Why is the default 5s? The default here is 5s for developer convinience. Some
+// browsers .. ** cough, cough -- CHROME ** .. hold open phony "in-flight"
+// requests, presumably for performance reasons. They'll send headers and
+// request body once the client decides it has a request to actually send, but
+// to the server, this phony open request looks like a legitimate open
+// connection that has begun processing. So in development, err on the side of
+// forcing connections to terminate early. In ECS environments, We should be
+// insulated from this behavior by our load balancer.
+const SHUTDOWN_GRACEPERIOD_MS = parseInt(
+  process.env.SHUTDOWN_GRACEPERIOD_MS || "2000"
+);
+
 // Validate Configuration
 
 if (isEmpty(APNS_P8) || isEmpty(APNS_AUTH) || isEmpty(GCM_AUTH)) {
@@ -320,3 +342,32 @@ const server = app.listen(PORT, () => {
   console.log(`Listening on ${address}:${port}`);
 });
 //main(...process.argv.slice(2))
+
+//=============================================================================
+// Signal Handling
+//=============================================================================
+
+server.on("error", () => {
+  console.error("Server error!", arguments);
+});
+
+async function shutdown(signal) {
+  console.log(`${signal} received`);
+  console.log("Shutting down.");
+  server.close((err) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    } else {
+      console.log("Server exited successfully.");
+      process.exit(0);
+    }
+  });
+  setTimeout(() => {
+    console.info("Forcibly terminating long-lived, in-flight connections");
+    server.closeAllConnections();
+  }, SHUTDOWN_GRACEPERIOD_MS);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
