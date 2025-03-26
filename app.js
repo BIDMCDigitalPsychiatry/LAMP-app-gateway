@@ -308,6 +308,8 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req, res) => {
 
 // Ping for healthchecks.
 app.get('/', (req, res) => res.status(200).json({ ok: true }))
+app.get("/healthz", (req, res) => res.status(200).json({ ok: true }).end());
+app.get("/readyz", (req, res) => res.status(200).json({ ok: true }).end());
 
 // The utility function driver code.
 async function main() {
