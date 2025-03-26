@@ -7,6 +7,20 @@ const cors = require("cors")
 const { response } = require("express")
 
 //=============================================================================
+// Error Handling
+//=============================================================================
+
+process.on("unhandledRejection", (reason, p) => {
+  console.error("Unhandled Rejection at:", p, "reason:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error(
+    `Caught exception: ${error}\n` + `Exception origin: ${error.stack}`
+  );
+});
+
+//=============================================================================
 // Config
 //=============================================================================
 
