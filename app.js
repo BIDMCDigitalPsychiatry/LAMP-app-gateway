@@ -340,7 +340,7 @@ async function main() {
 //=============================================================================
 
 console.log("LAMP - App Gateway");
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   const { address, port } = server.address();
   console.log(`Listening on ${address}:${port}`);
 });
