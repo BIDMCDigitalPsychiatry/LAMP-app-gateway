@@ -108,7 +108,6 @@ if (isEmpty(APNS_P8) || isEmpty(APNS_AUTH) || isEmpty(GCM_AUTH)) {
 //=============================================================================
 
 const app = express()
-app.use(cors({origin:"*"}))
 
 // Send an APNS push using `certificate` to `device` containing `payload`.
 async function APNSpush(certificate, device, payload) {
