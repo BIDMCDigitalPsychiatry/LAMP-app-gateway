@@ -13,5 +13,12 @@ RUN wget -O /usr/local/share/ca-certificates/comodoca.crt "https://comodoca.my.s
 
 #Update the certificate store
 RUN update-ca-certificates
-COPY . .
-CMD [ "node", "app.js" ]
+
+# Copy source code
+COPY src/ ./src/
+COPY tsconfig.json ./
+
+# Build TypeScript
+RUN npm run build
+
+CMD [ "node", "dist/app.js" ]
