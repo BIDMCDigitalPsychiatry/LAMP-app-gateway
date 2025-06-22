@@ -21,4 +21,4 @@ COPY tsconfig.json ./
 # Build TypeScript
 RUN npm run build
 
-CMD [ "node", "dist/app.js" ]
+CMD [ "node", "dist/server.js" ]
