@@ -325,31 +325,4 @@ app.get("/metrics", (req: express.Request, res: express.Response) => res.status(
 app.get("/healthz", (req: express.Request, res: express.Response) => res.status(200).json({ ok: true }).end());
 app.get("/readyz", (req: express.Request, res: express.Response) => res.status(200).json({ ok: true }).end());
 
-// The utility function driver code.
-async function main(...args: string[]): Promise<void> {
-	const platform = args[0] || ""
-	const deviceToken = args[1] || ""
-	const payload = args[2] || ""
-	if (args.length < 2 || !['apns', 'gcm'].includes(platform)) {
-		console.log(`Usage: ./push.js <apns|gcm> <DEVICE_TOKEN> <PAYLOAD>`);
-		console.log(`This utility allows you to push a JSON payload to a device with the mindLAMP app (either iOS or Android) installed.`);
-		process.exit(-1);
-	} else {
-		try {
-			if (platform === 'apns')
-				await APNSpush(P8, deviceToken, JSON.parse(payload));
-			else if (platform === 'gcm')
-				await GCMpush(GCM_AUTH, deviceToken, JSON.parse(payload));
-			else throw new Error('bad-platform');
-			console.log('Successfully sent push notification.');
-		} catch(e) {
-			console.error('Failed to send push notification.');
-			console.error(e);
-		} finally {
-			process.exit(0);
-		}
-	}	
-}
-
-
 export default app;
