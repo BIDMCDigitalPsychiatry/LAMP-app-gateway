@@ -5,13 +5,14 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc",
-    "start": "eval $(egrep -v '^#' .env | xargs -d '\n') node dist/app.js",
-    "dev": "eval $(egrep -v '^#' .env | xargs -d '\n') ts-node src/app.ts",
+    "start": "node dist/app.js",
+    "dev": "ts-node src/app.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "aws-sdk": "^2.802.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1"
   },

@@ -4,24 +4,11 @@ import * as jwt from "jsonwebtoken";
 import * as aws from 'aws-sdk';
 import express from "express";
 
-//=============================================================================
-// Helper Functions
-//=============================================================================
-
-function isEmpty(str: string | undefined): boolean {
-  return !str || str.length === 0;
-}
+import config from "./config";
 
 //=============================================================================
 // Types
 //=============================================================================
-
-interface P8Certificate {
-  teamID: string;
-  bundleID: string;
-  keyID: string;
-  contents: string;
-}
 
 interface APNSPayload {
   aps?: {
@@ -69,53 +56,8 @@ interface LogRequest {
 // Config
 //=============================================================================
 
-aws.config.update({
-	region: process.env.AWS_SES_REGION || "us-east-1",
-	credentials: {
-		accessKeyId: process.env.AWS_ACCESS_KEY || "",
-		secretAccessKey: process.env.AWS_SECRET_KEY || ""
-	}
-});
 const SES = new aws.SES();		
 const SNS = new aws.SNS();
-
-// [DEPRECATED] Use the `/push` endpoint with a `slack:{hook}` device token.
-// Only for Slack support. Format: "XXXXXXXXX/XXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX".
-const SLACK_HOOK: string = process.env.SLACK_HOOK || "";
-
-// Only for sending emails through AWS SES.
-const AWS_SES_FROM: string = process.env.AWS_SES_FROM || "system@lamp.digital";
-
-// API_KEYS is an optional array of allow-listed keys for request senders, 
-// stored as a comma-separatated list (i.e. "n1WHtGTpRByGjeOP,k6ToHy9lmUZB7LzZ")
-// If this array is set, requests missing an API Key or using an API Key 
-// not found in this array will be blocked.
-// To generate an API Key in the terminal: `openssl rand -base64 12`
-const API_KEYS: string[] = (process.env.API_KEYS || "").split(",").filter(x => x.length > 0);
-
-// APNS_AUTH and GCM_AUTH are certificate strings for accessing push servers.
-// APNS_P8 is the filename of the APNS certificate required in the below format.
-// APNS_P8 format: `${P8.teamID}_${P8.bundleID}_${P8.keyID}.p8`
-const APNS_P8: string = process.env.APNS_P8 || "";
-const APNS_AUTH: string = process.env.APNS_AUTH || "";
-const GCM_AUTH: string = process.env.GCM_AUTH || "";
-
-// DO NOT MODIFY THIS VARIABLE. See the above section instead.
-// This certificate is constructed from the above APNS_P8 and APNS_AUTH.
-const P8: P8Certificate = {
-	teamID: APNS_P8.split("_", 3)[0] || "",
-	bundleID: APNS_P8.split("_", 3)[1] || "",
-	keyID: (APNS_P8.split("_", 3)[2] || "").split(".", 1)[0] || "",
-	contents: `-----BEGIN PRIVATE KEY-----\n${(APNS_AUTH.match(/.{1,64}/g) || []).join("\n")}\n-----END PRIVATE KEY-----`
-};
-
-
-// Validate Configuration
-
-if (isEmpty(APNS_P8) || isEmpty(APNS_AUTH) || isEmpty(GCM_AUTH)) {
-  console.error("Missing required environment viriable(s)");
-  process.exit(-1);
-}
 
 //=============================================================================
 // Gateway Implementation
@@ -147,7 +89,7 @@ async function APNSpush(certificate: P8Certificate, device: string, payload: APN
 	
 	// Development: https://api.sandbox.push.apple.com:443
 	// Production: https://api.push.apple.com:443
-	const client = http2.connect("https://api.push.apple.com:443");
+	const client = http2.connect(config.deprecated.APNS_ENDPOINT);
 	const request = client.request(JSON.parse(JSON.stringify(HEADERS)));
 	return new Promise((resolve, reject) => {
 		const data: string[] = [];
@@ -165,7 +107,7 @@ async function APNSpush(certificate: P8Certificate, device: string, payload: APN
 
 // Send a Firebase (Google) push notification using `certificate` to the specified `device`.
 async function GCMpush(certificate: string, device: string, payload: GCMPayload): Promise<any> {
-	const client = http2.connect("https://fcm.googleapis.com:443/v1/projects/api-6882780734960683553-445906");
+	const client = http2.connect(config.deprecated.GCM_PUSH_ENDPOINT);
 	const buffer = Buffer.from(JSON.stringify({message:{
 		...payload, "token": device
 	}}));
@@ -202,7 +144,7 @@ async function GCMpush(certificate: string, device: string, payload: GCMPayload)
 // Send an email through AWS SES.
 async function SESpush(email: string, payload: EmailPayload): Promise<aws.SES.SendEmailResponse> {
 	return SES.sendEmail({
-		Source: AWS_SES_FROM,
+		Source: config.deprecated.AWS_SES_FROM,
 		ReplyToAddresses: typeof payload.from === 'string' ? payload.from.split(','): [],
 		Destination: {
 			ToAddresses: [email],
@@ -237,7 +179,7 @@ async function SNSpush(number: string, payload: SMSPayload): Promise<aws.SNS.Pub
 
 // Send a Slack message to a predefined channel/webhook.
 async function SLACKpush(hook: string, message: SlackPayload): Promise<string> {
-	const client = http2.connect(`https://hooks.slack.com:443`);
+	const client = http2.connect(config.deprecated.SLACK_PUSH_ENDPOINT);
 	const buffer = Buffer.from(JSON.stringify({ text: message.content || "<no message body>" }));
 	const request = client.request({
 		[':method']: 'POST',
@@ -264,7 +206,7 @@ app.post('/push', express.json(), async (req: express.Request<{}, {}, PushReques
 	
 	// First verify each parameter type.
 	// Note: "push_type" can be embedded in "device_token" like so: "<push_type>:<device_token>".
-	const verify0 = API_KEYS.length === 0 || API_KEYS.includes(req.body['api_key'] || '');
+	const verify0 = config.deprecated.API_KEYS.length === 0 || config.deprecated.API_KEYS.includes(req.body['api_key'] || '');
 	const verify1 = typeof req.body['device_token'] === "string";
 	const verify2 = ["apns", "gcm", "mailto", "sms", "slack"].includes(req.body['push_type'] || '');
 	const verify2a = verify1 && ["apns", "gcm", "mailto", "sms", "slack"].includes(req.body['device_token'].split(/:(.+)/, 2)[0] || '');
@@ -286,9 +228,9 @@ app.post('/push', express.json(), async (req: express.Request<{}, {}, PushReques
 	// We've verified the parameters, now invoke the push calls.
 	try {
 		if (req.body['push_type'] === 'apns')
-			await APNSpush(P8, req.body['device_token'], req.body['payload'] as APNSPayload);
+			await APNSpush(config.deprecated.APNS_P8, req.body['device_token'], req.body['payload'] as APNSPayload);
 		else if (req.body['push_type'] === 'gcm')
-			await GCMpush(GCM_AUTH, req.body['device_token'], req.body['payload'] as GCMPayload);
+			await GCMpush(config.deprecated.GCM_AUTH, req.body['device_token'], req.body['payload'] as GCMPayload);
 		else if (req.body['push_type'] === 'mailto')
 			await SESpush(req.body['device_token'], req.body['payload'] as EmailPayload);
 		else if (req.body['push_type'] === 'sms')
@@ -311,7 +253,7 @@ app.put(['/log', '/'], express.text({type: '*/*'}), async (req: express.Request<
 	
 	// Shortcut for sending a slack message instead of a log. [DEPRECATED]
 	if (req.query.stream === 'slack') {
-		await SLACKpush(SLACK_HOOK, { content: (req.body || '').trim() });
+		await SLACKpush(config.deprecated.SLACK_HOOK, { content: (req.body || '').trim() });
 		return res.status(200).json({ "destination": "slack" });
 	} else {
 		console.log(`[${req.query.level || 'info'}] [${req.query.origin || 'unknown'}] ${(req.body || '').trim()}`);
