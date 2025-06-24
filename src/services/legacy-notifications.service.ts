@@ -2,50 +2,9 @@ import * as aws from 'aws-sdk';
 import * as http2 from "http2";
 import * as jwt from "jsonwebtoken";
 import { Config } from '../config';
+import { APNSPayload, GCMPayload, EmailPayload, SMSPayload, SlackPayload } from '../controllers/legacy-notifications.controller';
 
-export interface APNSPayload {
-  aps?: {
-    id?: string;
-    'push-type'?: string;
-    expiration?: string;
-    'collapse-id'?: string;
-  };
-  [key: string]: any;
-}
-
-export interface GCMPayload {
-  [key: string]: any;
-}
-
-export interface EmailPayload {
-  from?: string;
-  cc?: string;
-  subject?: string;
-  body?: string;
-}
-
-export interface SMSPayload {
-  text: string;
-}
-
-export interface SlackPayload {
-  content?: string;
-}
-
-export interface PushRequest {
-  api_key?: string;
-  device_token: string;
-  push_type?: 'apns' | 'gcm' | 'mailto' | 'sms' | 'slack';
-  payload: APNSPayload | GCMPayload | EmailPayload | SMSPayload | SlackPayload;
-}
-
-export interface LogRequest {
-  origin?: string;
-  level?: string;
-  stream?: string;
-}
-
-export default class LegacyService {
+export default class LegacyNotificationsService {
   private readonly SES: aws.SES;
   private readonly SNS: aws.SNS;
   private readonly config: Config;
