@@ -57,7 +57,7 @@ if (isEmpty(APNS_P8) || isEmpty(APNS_AUTH) || isEmpty(GCM_AUTH)) {
   process.exit(-1);
 }
 
-interface Config {
+export interface Config {
   port: number;
   aws: {
     ses: {

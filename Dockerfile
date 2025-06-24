@@ -1,8 +1,6 @@
 # Use current Node LTS (Alpine) as base image
 FROM node:22-alpine3.21
 
-ENV NODE_ENV=production
-
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
@@ -22,5 +20,7 @@ COPY tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build
+
+ENV NODE_ENV=production
 
 CMD [ "node", "dist/server.js" ]
