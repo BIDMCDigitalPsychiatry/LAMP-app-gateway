@@ -35,3 +35,6 @@ build
 
 # Test coverage
 coverage
+
+# Google Credentials
+*-adminsdk-*.json

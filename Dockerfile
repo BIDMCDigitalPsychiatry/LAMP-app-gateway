@@ -1,6 +1,8 @@
 # Use current Node LTS (Alpine) as base image
 FROM node:22-alpine3.21
 
+RUN mkdir -p /opt/gcloud/
+
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
@@ -22,5 +24,6 @@ COPY tsconfig.json ./
 RUN npm run build
 
 ENV NODE_ENV=production
+ENV GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/opt/gcloud/service-account.json
 
 CMD [ "node", "dist/server.js" ]

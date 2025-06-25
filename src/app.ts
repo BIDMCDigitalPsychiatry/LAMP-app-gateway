@@ -8,6 +8,7 @@ import ServiceInfoController from "./controllers/service-info.controller";
 import LegacyNotificationsController from "./controllers/legacy-notifications.controller";
 import LegacyNotificationsService from "./services/legacy-notifications.service";
 import LegacyLogController from "./controllers/legacy-log.controller";
+import FirebaseMessagingServiceImpl from "./services/firebase-messaging.service";
 
 //=============================================================================
 // App
@@ -22,11 +23,20 @@ app.use(express.json());
 // -- { services } ------------------------------------------------------------
 
 const legacyNotificationsService = new LegacyNotificationsService(config);
+const firebaseMessagingService = new FirebaseMessagingServiceImpl({
+  serviceAccountJsonPath: config.firebase.serviceAccount.path
+})
 
 // -- { controllers } ---------------------------------------------------------
 
-const legacyLogController = new LegacyLogController(config, legacyNotificationsService)
-const legacyNotificationsController = new LegacyNotificationsController(config, legacyNotificationsService)
+const legacyLogController = new LegacyLogController(
+  config,
+  legacyNotificationsService)
+
+const legacyNotificationsController = new LegacyNotificationsController(
+  config,
+  legacyNotificationsService,
+  firebaseMessagingService)
 
 // -- { routes } --------------------------------------------------------------
 
@@ -39,6 +49,5 @@ app.get('/', ServiceInfoController.healthz);
 app.get("/metrics", ServiceInfoController.metrics);
 app.get("/healthz", ServiceInfoController.healthz);
 app.get("/readyz", ServiceInfoController.readyz);
-
 
 export default app;

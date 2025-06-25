@@ -3,6 +3,7 @@
 import { Request, Response } from "express";
 import LegacyNotificationService from "../services/legacy-notifications.service";
 import { Config } from "../config";
+import { FirebaseMessageContent, FirebaseMessagingService } from "../services/firebase-messaging.service";
 
 
 export interface APNSPayload {
@@ -15,6 +16,8 @@ export interface APNSPayload {
   [key: string]: any;
 }
 
+// TODO: We don't actually know the shape of the data coming in here. We'll want
+// to update the 'FirebaseNotificationAdapter' to accommodate
 export interface GCMPayload {
   [key: string]: any;
 }
@@ -41,13 +44,32 @@ interface PushRequest {
   payload: APNSPayload | GCMPayload | EmailPayload | SMSPayload | SlackPayload;
 }
 
+class FirebaseNotificationAdapter {
+  private readonly title: string;
+  private readonly body: string;
+
+  constructor(message: GCMPayload) {
+    this.title = message.title || "<undefined>"
+    this.body = message.body || "<undefined>"
+  }
+
+  public asFirebaseMessageContent(): FirebaseMessageContent {
+    return {
+      title: this.title,
+      body: this.body
+    }
+  }
+}
+
 export default class LegacyNotificationsController {
-  private readonly notificationService: LegacyNotificationService;
+  private readonly legacyNotificationService: LegacyNotificationService;
+  private readonly firebaseMessagingService: FirebaseMessagingService;
   private readonly config: Config;
   
-  constructor(config: Config, legacyNotificationService: LegacyNotificationService) {
-    this.notificationService = legacyNotificationService
+  constructor(config: Config, legacyNotificationService: LegacyNotificationService, firebaseMessagingService: FirebaseMessagingService) {
+    this.legacyNotificationService = legacyNotificationService
     this.config = config;
+    this.firebaseMessagingService = firebaseMessagingService;
   }
 
 
@@ -77,15 +99,18 @@ export default class LegacyNotificationsController {
     // We've verified the parameters, now invoke the push calls.
     try {
       if (req.body['push_type'] === 'apns')
-        await this.notificationService.APNSpush(this.config.deprecated.APNS_P8, req.body['device_token'], req.body['payload'] as APNSPayload);
+        await this.legacyNotificationService.APNSpush(this.config.deprecated.APNS_P8, req.body['device_token'], req.body['payload'] as APNSPayload);
       else if (req.body['push_type'] === 'gcm')
-        await this.notificationService.GCMpush(this.config.deprecated.GCM_AUTH, req.body['device_token'], req.body['payload'] as GCMPayload);
+        await this.firebaseMessagingService.sendPush(
+          req.body['device_token'],
+          new FirebaseNotificationAdapter(req.body['payload']).asFirebaseMessageContent()
+        )
       else if (req.body['push_type'] === 'mailto')
-        await this.notificationService.SESpush(req.body['device_token'], req.body['payload'] as EmailPayload);
+        await this.legacyNotificationService.SESpush(req.body['device_token'], req.body['payload'] as EmailPayload);
       else if (req.body['push_type'] === 'sms')
-        await this.notificationService.SNSpush(req.body['device_token'], req.body['payload'] as SMSPayload);
+        await this.legacyNotificationService.SNSpush(req.body['device_token'], req.body['payload'] as SMSPayload);
       else if (req.body['push_type'] === 'slack')
-        await this.notificationService.SLACKpush(req.body['device_token'], req.body['payload'] as SlackPayload);
+        await this.legacyNotificationService.SLACKpush(req.body['device_token'], req.body['payload'] as SlackPayload);
       return res.status(200).json({});
     } catch(e) {
       return res.status(400).json({ "error": e || "unknown error occurred" });

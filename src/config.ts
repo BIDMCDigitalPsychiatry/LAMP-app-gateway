@@ -65,6 +65,11 @@ export interface Config {
       fromAddress: string
     }
   },
+  firebase: {
+    serviceAccount: {
+      path: string
+    }
+  },
   deprecated: {
     API_KEYS: string[],
     APNS_P8: P8Certificate,
@@ -83,6 +88,11 @@ const config: Config = {
     ses: {
       region: "us-east-1",
       fromAddress: process.env.AWS_SES_ADDRESS || ""
+    }
+  },
+  firebase: {
+    serviceAccount: {
+      path: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || ""
     }
   },
   deprecated: {
