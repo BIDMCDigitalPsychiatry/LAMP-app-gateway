@@ -1,6 +1,26 @@
+// -- { CRITICAL LOADING - START } --------------------------------------------
+//
+// Important: Ordering is important here. Sentry's node instramentation portion
+// should be the first thing to run in order to capture any errors that might
+// occur loading our dependencies or wiring up the app. Then, if we are running
+// a dev environment locally, load the .env file using dotenv.
+// ----------------------------------------------------------------------------
+
+import "./sentry";
+
+// NOTE: NODE_ENV is 'production' anytime we are in our docker container. So ALL
+// non-local environments (dev, stg, prod at time of writing).
+import dotenv from 'dotenv';
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
+
+// ----------------------------------------------------------------------------
+// Now we can proceed loading all the rest of the world...
+//
+// -- { CRITICAL LOADING - END } ----------------------------------------------
 
 import app from "./app";
-
 
 //=============================================================================
 // Config

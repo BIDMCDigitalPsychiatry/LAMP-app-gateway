@@ -10,6 +10,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@sentry/node": "^9.32.0",
     "aws-sdk": "^2.802.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
