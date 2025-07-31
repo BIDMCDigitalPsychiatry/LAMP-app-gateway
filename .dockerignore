@@ -1,0 +1,40 @@
+# Environment files
+.env
+.env.*
+
+# Node modules
+node_modules
+npm-debug.log*
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+CLAUDE.md
+*.md
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Build artifacts
+dist
+build
+
+# Test coverage
+coverage
+
+# Google Credentials
+*-adminsdk-*.json

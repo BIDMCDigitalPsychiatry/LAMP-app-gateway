@@ -1,6 +1,8 @@
 # Use current Node LTS (Alpine) as base image
 FROM node:22-alpine3.21
 
+RUN mkdir -p /opt/gcloud/
+
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
@@ -13,5 +15,15 @@ RUN wget -O /usr/local/share/ca-certificates/comodoca.crt "https://comodoca.my.s
 
 #Update the certificate store
 RUN update-ca-certificates
-COPY . .
-CMD [ "node", "app.js" ]
+
+# Copy source code
+COPY src/ ./src/
+COPY tsconfig.json ./
+
+# Build TypeScript
+RUN npm run build
+
+ENV NODE_ENV=production
+ENV GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/opt/gcloud/service-account.json
+
+CMD [ "node", "dist/server.js" ]
