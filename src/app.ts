@@ -48,6 +48,7 @@ app.get('/', ServiceInfoController.healthz);
 app.get("/metrics", ServiceInfoController.metrics);
 app.get("/healthz", ServiceInfoController.healthz);
 app.get("/readyz", ServiceInfoController.readyz);
+app.get("/version", ServiceInfoController.version);
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");
