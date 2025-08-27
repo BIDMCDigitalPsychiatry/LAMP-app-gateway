@@ -35,6 +35,10 @@ const demoNotificationsController = new DemoNotificationsController(
 app.post('/test-apns', demoNotificationsController.sendDemoApnsNote)
 app.post('/test-firebase', demoNotificationsController.sendDemoFirebaseNote)
 
+app.post('/level-up/welcome', levelupNotificationsController.welcome)
+app.post('/level-up/new-message', levelupNotificationsController.newMessage)
+app.post('/level-up/reminder-activity', levelupNotificationsController.reminderActivity)
+
 app.get('/', ServiceInfoController.healthz);
 app.get("/metrics", ServiceInfoController.metrics);
 app.get("/healthz", ServiceInfoController.healthz);
