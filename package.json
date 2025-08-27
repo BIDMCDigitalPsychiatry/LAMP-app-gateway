@@ -11,6 +11,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@parse/node-apn": "^6.5.0",
     "@sentry/node": "^9.32.0",
     "aws-sdk": "^2.802.0",
     "express": "^5.1.0",
