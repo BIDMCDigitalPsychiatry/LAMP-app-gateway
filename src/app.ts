@@ -5,6 +5,8 @@ import config from "./config";
 
 import ServiceInfoController from "./controllers/service-info.controller";
 import FirebaseMessagingServiceImpl from "./services/firebase-messaging.service";
+import DemoNotificationsController from "./controllers/demo-notifications.controller";
+import ApplePushNotificationServiceImpl from "./services/apple-push-notification.service";
 
 //=============================================================================
 // App
@@ -18,15 +20,20 @@ app.use(express.json());
 
 // -- { services } ------------------------------------------------------------
 
-const firebaseMessagingService = new FirebaseMessagingServiceImpl({
-  serviceAccountJsonPath: config.firebase.serviceAccount.path
-})
+const firebaseMessagingService = new FirebaseMessagingServiceImpl(config.firebase)
+const applePushNotificationService = new ApplePushNotificationServiceImpl(config.apns)
 
 // -- { controllers } ---------------------------------------------------------
 
+const demoNotificationsController = new DemoNotificationsController(
+  applePushNotificationService,
+  firebaseMessagingService
+)
 
 // -- { routes } --------------------------------------------------------------
 
+app.post('/test-apns', demoNotificationsController.sendDemoApnsNote)
+app.post('/test-firebase', demoNotificationsController.sendDemoFirebaseNote)
 
 app.get('/', ServiceInfoController.healthz);
 app.get("/metrics", ServiceInfoController.metrics);

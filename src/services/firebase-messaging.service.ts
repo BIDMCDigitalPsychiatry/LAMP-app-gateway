@@ -26,6 +26,7 @@ export interface FirebaseConfig {
 
 export interface FirebaseMessagingService {
   sendPush(deviceId: FirebaseToken, content: FirebaseMessageContent): Promise<string>,
+  sendDemoNotification(deviceId: FirebaseToken): Promise<string>
 }
 
 export default class FirebaseMessagingServiceImpl implements FirebaseMessagingService {
@@ -44,6 +45,17 @@ export default class FirebaseMessagingServiceImpl implements FirebaseMessagingSe
       notification: {
         body: content.body,
         title: content.title
+      }
+    }
+    return await this.messaging.send(message)
+  }
+
+  async sendDemoNotification(token: FirebaseToken): Promise<string> {
+    const message : TokenMessage = {
+      token,
+      notification: {
+        body: "Demo message body content",
+        title: "Demo message Title"
       }
     }
     return await this.messaging.send(message)
