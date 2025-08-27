@@ -48,11 +48,9 @@ To generate a new API key, use `openssl rand -base64 12`. Append it to the list 
 
 To configure the Firebase Admin application in our non-google environment, we must set credentials manually rather than relying on Google's "Application Default Credentials" look-up chain. Our application has a service account for each environment:
 
-_TODO: Fill in these values once service accounts are created :construction:_
-
-  - `dev`: ``
-  - `staging`: ``
-  - `prod`: ``
+  - `dev`: `LAMP-notif-dev`
+  - `staging`: `LAMP-notif-stg`
+  - `prod`: `LAMP-notif-prod`
 
 Each of these service accounts should be grantend the "Service Account Token Creator" and "Firebase Admin SDK Administrator Service Agent" roles on the "LAMP Platform" resource.
 
