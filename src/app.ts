@@ -4,10 +4,9 @@ import * as Sentry from '@sentry/node';
 import config from "./config";
 
 import ServiceInfoController from "./controllers/service-info.controller";
-import LegacyNotificationsController from "./controllers/legacy-notifications.controller";
-import LegacyNotificationsService from "./services/legacy-notifications.service";
-import LegacyLogController from "./controllers/legacy-log.controller";
 import FirebaseMessagingServiceImpl from "./services/firebase-messaging.service";
+import DemoNotificationsController from "./controllers/demo-notifications.controller";
+import ApplePushNotificationServiceImpl from "./services/apple-push-notification.service";
 
 //=============================================================================
 // App
@@ -21,28 +20,20 @@ app.use(express.json());
 
 // -- { services } ------------------------------------------------------------
 
-const legacyNotificationsService = new LegacyNotificationsService(config);
-const firebaseMessagingService = new FirebaseMessagingServiceImpl({
-  serviceAccountJsonPath: config.firebase.serviceAccount.path
-})
+const firebaseMessagingService = new FirebaseMessagingServiceImpl(config.firebase)
+const applePushNotificationService = new ApplePushNotificationServiceImpl(config.apns)
 
 // -- { controllers } ---------------------------------------------------------
 
-const legacyLogController = new LegacyLogController(
-  config,
-  legacyNotificationsService)
-
-const legacyNotificationsController = new LegacyNotificationsController(
-  config,
-  legacyNotificationsService,
-  firebaseMessagingService)
+const demoNotificationsController = new DemoNotificationsController(
+  applePushNotificationService,
+  firebaseMessagingService
+)
 
 // -- { routes } --------------------------------------------------------------
 
-app.put('/', express.text({type: '*/*'}), legacyLogController.log)
-app.put('/log', express.text({type: '*/*'}), legacyLogController.log)
-
-app.post('/push', legacyNotificationsController.push)
+app.post('/test-apns', demoNotificationsController.sendDemoApnsNote)
+app.post('/test-firebase', demoNotificationsController.sendDemoFirebaseNote)
 
 app.get('/', ServiceInfoController.healthz);
 app.get("/metrics", ServiceInfoController.metrics);
