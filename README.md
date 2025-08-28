@@ -22,7 +22,7 @@ To encode a file:
 
 ```
 # OSX
-base64 -w 0 input_file | pbcopy
+openssl base64 -A -in input_file | pbcopy
 
 # Linux
 base64 -w 0 input_file | xclip -selection clipboard
@@ -32,7 +32,7 @@ To encode a value:
 
 ```
 # OSX
-echo -n "input_value" | base64 -w 0 | pbcopy
+printf %s "input_value" | openssl base64 -A | pbcopy
 
 # Linux
 echo -n "input_value" | base64 -w 0 | xclip -selection clipboard
