@@ -40,7 +40,7 @@ const PORT: number = parseInt(process.env.PORT || "3000");
 // reasonable to the ECS grace period (30s). Other environments should consider
 // a similar heuristic.
 //
-// Why is the default 5s? The default here is 5s for developer convinience. Some
+// Why is the default 5s? The default here is 2s for developer convinience. Some
 // browsers .. ** cough, cough -- CHROME ** .. hold open phony "in-flight"
 // requests, presumably for performance reasons. They'll send headers and
 // request body once the client decides it has a request to actually send, but
