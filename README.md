@@ -9,9 +9,10 @@ The app gateway server component for logging and push notifications.
 | `SENTRY_ENV`   |   |   |
 | `API_KEYS`   | :heavy_check_mark:  | _Secret_. Comma-separated list of   |
 | `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64`  | :heavy_check_mark:  | _Secret_. A base64 encoded service account key. These keys start as json in cleartext and must be base64 encoded before setting. To generate the service account json file, follow  |
-| `APNS_KEY_FILE_BASE64`   | :heavy_check_mark:  | _Secret_.  |
+| `APNS_KEY_FILE_BASE64`   | :heavy_check_mark:  | _Secret_. This is a base64-encoded .p8 key. See details below reguarding it's generation and encoding. |
 | `APNS_KEY_ID`   | :heavy_check_mark:  |   |
 | `APNS_TEAM_ID`   | :heavy_check_mark:  |   |
+| `APNS_BUNDLE_ID`   | :heavy_check_mark:  | The Apple app's bundle id (the reverse-dns style identifier) is used as the topic for push notifications.  |
 | `APNS_IS_PRODUCTION` | | Set to `true` if production APNs endpoints should be used. Else, `false` or not set. |
 
 > [!NOTE] 
