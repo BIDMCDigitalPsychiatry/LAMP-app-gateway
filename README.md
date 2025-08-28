@@ -14,9 +14,8 @@ The app gateway server component for logging and push notifications.
 | `APNS_TEAM_ID`   | :heavy_check_mark:  |   |
 | `APNS_IS_PRODUCTION` | | Set to `true` if production APNs endpoints should be used. Else, `false` or not set. |
 
-_Note about `base64` encoded variables_
-
-Variables ending in `_BASE64` are values that must be base64 encoded prior to being set in the environment or parameter store secrets. Typically these environment variables are files, such as google's serivce accounts or apns' certificate bundles.
+> [!NOTE] 
+> Variables ending in `_BASE64` are values that must be base64 encoded prior to being set in the environment or parameter store secrets. Typically these environment variables are files, such as google's serivce accounts or apns' certificate bundles.
 
 To encode a file:
 
@@ -38,7 +37,8 @@ printf %s "input_value" | openssl base64 -A | pbcopy
 echo -n "input_value" | base64 -w 0 | xclip -selection clipboard
 ```
 
-Warning: there are several variants of base-64 encoding out there. `base64` uses the one defined in RFC 4648. When decoding in node, use `Buffer.from(base64String, 'base64').toString('utf8');`. Beware of functions that encode or decode base-64 using alterative character sets or padding. See [this mdn article](https://developer.mozilla.org/en-US/docs/Glossary/Base64) for more.
+> [!WARNING]  
+> there are several variants of base-64 encoding out there. `base64` uses the one defined in RFC 4648. When decoding in node, use `Buffer.from(base64String, 'base64').toString('utf8');`. Beware of functions that encode or decode base-64 using alterative character sets or padding. See [this mdn article](https://developer.mozilla.org/en-US/docs/Glossary/Base64) for more.
 
 ### Adding a new API Key
 
@@ -65,7 +65,8 @@ To (re)configure the keys to each of these service accounts, follow these steps:
   7. Force a new deployment in the ECS console to pick up the new service account key.
   8. Once confirmed the key is up and working, delete the old key.
 
-**Warning**: Do not delete the old key, if any, until the service is restarted and confirmed working. Once a container is running, it will continue to use the same service account key until it is restarted or redeployed.
+> [!WARNING]  
+> Do not delete the old key, if any, until the service is restarted and confirmed working. Once a container is running, it will continue to use the same service account key until it is restarted or redeployed.
 
 ### Setting Apple Push Notification Service (APNs) Variables
 
