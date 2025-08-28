@@ -13,6 +13,7 @@ export interface ApnsConfig {
   keyFileContents: string,
   keyId: string,
   teamId: string,
+  bundleId: string,
   isProduction: boolean
 }
 
@@ -24,6 +25,7 @@ export interface ApplePushNotificationService {
 export default class ApplePushNotificationServiceImpl implements ApplePushNotificationService {
 
   private readonly connection: Provider;
+  private readonly topic: string;
 
   constructor(config: ApnsConfig) {
     var options = {
@@ -35,6 +37,7 @@ export default class ApplePushNotificationServiceImpl implements ApplePushNotifi
       production: config.isProduction
     };
 
+    this.topic = config.bundleId
     this.connection = new apn.Provider(options);
   }
 
@@ -56,7 +59,7 @@ export default class ApplePushNotificationServiceImpl implements ApplePushNotifi
     note.sound = "ping.aiff";
     note.alert = "\uD83D\uDCE7 \u2709 You have a new message";
     note.payload = {'messageFrom': 'John Appleseed'};
-    note.topic = "digital.lamp.test.will";
+    note.topic = this.topic;
 
     try {
       await this.connection.send(note, deviceId);

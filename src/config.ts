@@ -18,6 +18,7 @@ const {
   APNS_KEY_FILE_BASE64,
   APNS_KEY_ID,
   APNS_TEAM_ID,
+  APNS_BUNDLE_ID,
   APNS_USE_PRODUCTION_ENDPOINT,
   FIREBASE_SERVICE_ACCOUNT_JSON_BASE64
 } = process.env;
@@ -38,6 +39,7 @@ if (
   isEmpty(APNS_KEY_FILE_BASE64) ||
   isEmpty(APNS_KEY_ID) ||
   isEmpty(APNS_TEAM_ID) ||
+  isEmpty(APNS_BUNDLE_ID) ||
   isEmpty(APNS_USE_PRODUCTION_ENDPOINT) ||
   isEmpty(FIREBASE_SERVICE_ACCOUNT_JSON_BASE64)
 ) {
@@ -86,6 +88,7 @@ const config: Config = {
     keyFileContents: Buffer.from(APNS_KEY_FILE_BASE64 as string, 'base64').toString('utf8'),
     keyId: APNS_KEY_ID as string,
     teamId: APNS_TEAM_ID as string,
+    bundleId: APNS_BUNDLE_ID as string,
     isProduction: APNS_USE_PRODUCTION_ENDPOINT == "true"
   },
 };
