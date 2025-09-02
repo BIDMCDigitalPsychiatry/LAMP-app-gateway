@@ -36,9 +36,10 @@ app.post('/test-apns', demoNotificationsController.sendDemoApnsNote)
 app.post('/test-firebase', demoNotificationsController.sendDemoFirebaseNote)
 
 app.get('/', ServiceInfoController.healthz);
-app.get("/metrics", ServiceInfoController.metrics);
-app.get("/healthz", ServiceInfoController.healthz);
-app.get("/readyz", ServiceInfoController.readyz);
+app.get("/system/healthz", ServiceInfoController.healthz);
+app.get("/system/readyz", ServiceInfoController.readyz);
+app.get("/system/metrics", ServiceInfoController.metrics);
+app.get("/system/version", ServiceInfoController.version)
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry error!");
