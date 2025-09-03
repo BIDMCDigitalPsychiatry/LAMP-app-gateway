@@ -1,13 +1,13 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Notification, Provider } from "@parse/node-apn";
+import { AppConfig } from '../../config/configuration';
 
 var apn = require('@parse/node-apn');
 
-export type DeviceToken = string
+export type DeviceToken = string;
 
-
-interface PushNotificationContent {
-
-}
+interface PushNotificationContent {}
 
 export interface ApnsConfig {
   keyFileContents: string,
@@ -17,27 +17,24 @@ export interface ApnsConfig {
   isProduction: boolean
 }
 
-export interface ApplePushNotificationService {
-  sendPush(deviceId: DeviceToken, content: PushNotificationContent): Promise<null>
-  sendDemoNotification(deviceId: DeviceToken): Promise<null>
-}
-
-export default class ApplePushNotificationServiceImpl implements ApplePushNotificationService {
-
+@Injectable()
+export class ApplePushNotificationService {
   private readonly connection: Provider;
   private readonly topic: string;
 
-  constructor(config: ApnsConfig) {
+  constructor(private configService: ConfigService) {
+    const config = this.configService.get('app') as AppConfig;
+    
     var options = {
       token: {
-        key: config.keyFileContents,
-        keyId: config.keyId,
-        teamId: config.teamId
+        key: config.apns.keyFileContents,
+        keyId: config.apns.keyId,
+        teamId: config.apns.teamId
       },
-      production: config.isProduction
+      production: config.apns.isProduction
     };
 
-    this.topic = config.bundleId
+    this.topic = config.apns.bundleId;
     this.connection = new apn.Provider(options);
   }
 
@@ -45,14 +42,14 @@ export default class ApplePushNotificationServiceImpl implements ApplePushNotifi
     try {
       await this.connection.send(notification, deviceId);
     } catch (error) {
-      console.error("Error sending apns note: ", error)
+      console.error("Error sending apns note: ", error);
     }
 
-    return null
+    return null;
   }
 
   public async sendDemoNotification(deviceId: DeviceToken) {
-    const note : Notification = new Notification()
+    const note: Notification = new Notification();
 
     note.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
     note.badge = 3;
@@ -64,9 +61,9 @@ export default class ApplePushNotificationServiceImpl implements ApplePushNotifi
     try {
       await this.connection.send(note, deviceId);
     } catch (error) {
-      console.error("Error sending apns note: ", error)
+      console.error("Error sending apns note: ", error);
     }
 
-    return null
+    return null;
   }
 }

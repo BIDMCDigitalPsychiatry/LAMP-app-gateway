@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout 8s npm run dev:nest)",
+      "Bash(PORT=3002 timeout 8s npm run dev:nest)",
+      "Bash(npm run dev:nest:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

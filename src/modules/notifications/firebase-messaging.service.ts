@@ -1,0 +1,51 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { cert, initializeApp } from 'firebase-admin/app';
+import { getMessaging, Messaging, TokenMessage } from 'firebase-admin/messaging';
+import { AppConfig } from '../../config/configuration';
+
+export type FirebaseToken = string;
+
+export interface FirebaseMessageContent {
+  title: string;
+  body: string;
+}
+
+export interface FirebaseConfig {
+  serviceAccountFileContents: string
+}
+
+@Injectable()
+export class FirebaseMessagingService {
+  private readonly messaging: Messaging;
+
+  constructor(private configService: ConfigService) {
+    const config = this.configService.get('app') as AppConfig;
+    const app = initializeApp({
+      credential: cert(JSON.parse(config.firebase.serviceAccountFileContents))
+    });
+    this.messaging = getMessaging(app);
+  }
+
+  async sendPush(token: FirebaseToken, content: FirebaseMessageContent): Promise<string> {
+    const message: TokenMessage = {
+      token,
+      notification: {
+        body: content.body,
+        title: content.title
+      }
+    };
+    return await this.messaging.send(message);
+  }
+
+  async sendDemoNotification(token: FirebaseToken): Promise<string> {
+    const message: TokenMessage = {
+      token,
+      notification: {
+        body: "Demo message body content",
+        title: "Demo message Title"
+      }
+    };
+    return await this.messaging.send(message);
+  }
+}
