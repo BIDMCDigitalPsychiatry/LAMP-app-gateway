@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
+
 import { Notification, Provider } from "@parse/node-apn";
-import { AppConfig } from '../../config/configuration';
+import apnsConfig from '../../config/apns.config';
 
 var apn = require('@parse/node-apn');
 
@@ -22,19 +22,21 @@ export class ApplePushNotificationService {
   private readonly connection: Provider;
   private readonly topic: string;
 
-  constructor(private configService: ConfigService) {
-    const config = this.configService.get('app') as AppConfig;
+  constructor(
+    @Inject(apnsConfig.KEY)
+    private config: ApnsConfig
+  ) {
     
     var options = {
       token: {
-        key: config.apns.keyFileContents,
-        keyId: config.apns.keyId,
-        teamId: config.apns.teamId
+        key: config.keyFileContents,
+        keyId: config.keyId,
+        teamId: config.teamId
       },
-      production: config.apns.isProduction
+      production: config.isProduction
     };
 
-    this.topic = config.apns.bundleId;
+    this.topic = config.bundleId;
     this.connection = new apn.Provider(options);
   }
 

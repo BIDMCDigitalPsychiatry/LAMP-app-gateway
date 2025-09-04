@@ -2,7 +2,6 @@ import { Controller, Post, HttpStatus, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FirebaseMessagingService } from './firebase-messaging.service';
 import { ApplePushNotificationService } from './apple-push-notification.service';
-import { AppConfig } from '../../config/configuration';
 
 @Controller()
 export class NotificationsController {

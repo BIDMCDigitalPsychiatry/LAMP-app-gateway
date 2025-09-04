@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getMessaging, Messaging, TokenMessage } from 'firebase-admin/messaging';
-import { AppConfig } from '../../config/configuration';
+import firebaseConfig from '../../config/firebase.config';
 
 export type FirebaseToken = string;
 
@@ -19,10 +18,12 @@ export interface FirebaseConfig {
 export class FirebaseMessagingService {
   private readonly messaging: Messaging;
 
-  constructor(private configService: ConfigService) {
-    const config = this.configService.get('app') as AppConfig;
+  constructor(
+    @Inject(firebaseConfig.KEY)
+    private config: FirebaseConfig
+  ) {
     const app = initializeApp({
-      credential: cert(JSON.parse(config.firebase.serviceAccountFileContents))
+      credential: cert(JSON.parse(config.serviceAccountFileContents))
     });
     this.messaging = getMessaging(app);
   }
