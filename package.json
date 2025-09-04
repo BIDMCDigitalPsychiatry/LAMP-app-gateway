@@ -9,11 +9,11 @@
     "start": "node dist/main.js",
     "dev": "dotenv -- nodemon src/main.ts",
     "clean": "rm -rf dist",
-    "test": "dotenv -- jest",
-    "test:watch": "dotenv -- jest --watch",
-    "test:coverage": "dotenv -- jest --coverage",
-    "test:debug": "dotenv -- NODE_ENV=test-verbose jest --verbose",
-    "test:e2e": "dotenv -- jest --config ./test/jest-e2e.json"
+    "test": "dotenv -e .env.test -- jest",
+    "test:watch": "dotenv -e .env.test -- jest --watch",
+    "test:coverage": "dotenv -e .env.test -- jest --coverage",
+    "test:debug": "dotenv -e .env.test -- NODE_ENV=test-verbose jest --verbose",
+    "test:e2e": "dotenv -e .env.test -- jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",

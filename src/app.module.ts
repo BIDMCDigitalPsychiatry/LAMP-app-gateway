@@ -4,6 +4,8 @@ import configuration, { schema } from './config/app.config';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SystemModule } from './modules/system/system.module';
 import { SentryModule } from "@sentry/nestjs/setup";
+import apnsConfig from './modules/notifications/config/apns.config';
+import firebaseConfig from './modules/notifications/config/firebase.config';
 
 
 @Module({
@@ -18,7 +20,9 @@ import { SentryModule } from "@sentry/nestjs/setup";
       // process-launch.
       ignoreEnvFile: true,
       load: [
+        apnsConfig,
         configuration,
+        firebaseConfig
       ],
       validationSchema: schema,
       validationOptions: {
