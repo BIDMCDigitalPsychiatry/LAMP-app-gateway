@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getMessaging, Messaging, TokenMessage } from 'firebase-admin/messaging';
-import firebaseConfig from '../../config/firebase.config';
+import firebaseConfig from './config/firebase.config';
 
 export type FirebaseToken = string;
 

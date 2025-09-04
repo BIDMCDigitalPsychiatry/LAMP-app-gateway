@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { Notification, Provider } from "@parse/node-apn";
-import apnsConfig from '../../config/apns.config';
+import apnsConfig from './config/apns.config';
 
 var apn = require('@parse/node-apn');
 

@@ -9,11 +9,11 @@
     "start": "node dist/main.js",
     "dev": "dotenv -- nodemon src/main.ts",
     "clean": "rm -rf dist",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:debug": "NODE_ENV=test-verbose jest --verbose",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test": "dotenv -- jest",
+    "test:watch": "dotenv -- jest --watch",
+    "test:coverage": "dotenv -- jest --coverage",
+    "test:debug": "dotenv -- NODE_ENV=test-verbose jest --verbose",
+    "test:e2e": "dotenv -- jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
@@ -26,6 +26,7 @@
     "class-validator": "^0.14.2",
     "express": "^5.1.0",
     "firebase-admin": "^13.4.0",
+    "joi": "^18.0.1",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {

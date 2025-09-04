@@ -12,6 +12,7 @@ describe('AppModule', () => {
 
   beforeAll(() => {
     // Set required environment variables
+    process.env.API_KEYS = 'testkey123456,anothertestkey123';
     process.env.APNS_KEY_FILE_BASE64 = Buffer.from('test-key').toString('base64');
     process.env.APNS_KEY_ID = 'test-key-id';
     process.env.APNS_TEAM_ID = 'test-team-id';
