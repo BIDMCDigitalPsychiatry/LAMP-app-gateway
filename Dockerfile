@@ -5,7 +5,7 @@ RUN mkdir -p /opt/gcloud/
 
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 #Install ca-certificates package
 RUN apk update && apk add --no-cache wget ca-certificates
@@ -24,7 +24,6 @@ COPY tsconfig.json ./
 RUN npm run build
 
 ENV NODE_ENV=production
-ENV GOOGLE_SERVICE_ACCOUNT_KEY_PATH=/opt/gcloud/service-account.json
 
 ARG ORG_OPENCONTAINERS_IMAGE_CREATED
 ARG ORG_OPENCONTAINERS_IMAGE_REVISION

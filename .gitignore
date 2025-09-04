@@ -108,3 +108,5 @@ dist
 
 # macOS system files
 .DS_Store
+
+.claude/
