@@ -7,14 +7,15 @@ function isEmpty(str: string | undefined): boolean {
 }
 
 export interface AppConfig {
-  port: number;
+  port: number
+  host: string
   auth: {
     bearer: {
-      keyWhitelist: string[];
-    };
-  };
-  firebase: FirebaseConfig;
-  apns: ApnsConfig;
+      keyWhitelist: string[]
+    }
+  }
+  firebase: FirebaseConfig
+  apns: ApnsConfig
 }
 
 export default registerAs('app', (): AppConfig => {
@@ -46,6 +47,7 @@ export default registerAs('app', (): AppConfig => {
 
   return {
     port: Number(PORT) || 3000,
+    host: "0.0.0.0",
     auth: {
       bearer: {
         keyWhitelist: apiKeys

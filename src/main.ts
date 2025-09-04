@@ -20,9 +20,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { SentryExceptionFilter } from './filters/sentry-exception.filter';
-
-const port = parseInt(process.env.PORT || '3000');
-const host = "0.0.0.0"
+import { ConfigService } from "@nestjs/config";
 
 export async function bootstrap() {
   try {
@@ -42,9 +40,16 @@ export async function bootstrap() {
       '-- { Phase: Launch Server } -------------------------------------------'
     );
     
-    await app.listen(port, host, () => {
-      console.log(`Listening on ${host}:${port}`);
-    });
+    const configService = app.get(ConfigService);
+    const port = configService.getOrThrow<number>("app.port")
+    const host = configService.getOrThrow<string>("app.host")
+    await app.listen(
+      port,
+      host,
+      () => {
+        console.log(`Listening on ${host}:${port}`);
+      }
+    );
     
 
     console.log(
