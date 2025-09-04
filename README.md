@@ -43,7 +43,7 @@ echo -n "input_value" | base64 -w 0 | xclip -selection clipboard
 
 ### Adding a new API Key
 
-To generate a new API key, use `openssl rand -base64 12`. Append it to the list with a comma, without spaces.
+To generate a new API key, use `tr -dc A-Za-z0-9 </dev/urandom | head -c 64; echo`. Append it to the list with a comma, without spaces.
 
 ### Setting Firebase Variables
 
