@@ -32,10 +32,9 @@ jobs:
       - name: Run unit tests
         run: npm test
 
-      - name: Generate test coverage
-        run: npm run test:coverage
-
       - uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          test-script: npm run test:coverage
 
   e2e-tests:
     name: "E2E Tests" 
