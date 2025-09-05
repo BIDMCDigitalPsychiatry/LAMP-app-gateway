@@ -6,6 +6,8 @@ import { SystemModule } from './modules/system/system.module';
 import { SentryModule } from "@sentry/nestjs/setup";
 import apnsConfig from './modules/notifications/config/apns.config';
 import firebaseConfig from './modules/notifications/config/firebase.config';
+import { APP_GUARD } from '@nestjs/core';
+import { ApiKeyGuard } from './guards/api-key.guard';
 
 
 @Module({
@@ -33,6 +35,12 @@ import firebaseConfig from './modules/notifications/config/firebase.config';
     }),
     NotificationsModule,
     SystemModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
   ],
 })
 export class AppModule {}

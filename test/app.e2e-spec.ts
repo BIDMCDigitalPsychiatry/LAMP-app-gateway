@@ -9,8 +9,11 @@ import { ApplePushNotificationService } from '../src/modules/notifications/apple
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
+  let testApiKey: string;
 
   beforeEach(async () => {
+    testApiKey = TestUtils.getTestApiKey();
+    
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -38,61 +41,100 @@ describe('AppController (e2e)', () => {
   });
 
   describe('System endpoints', () => {
-    it('/ (GET)', () => {
-      return request(app.getHttpServer())
-        .get('/')
-        .expect(200)
-        .expect({ ok: true });
+    describe('Public endpoints (no authentication required)', () => {
+      it('/system/healthz (GET) should work without authentication', () => {
+        return request(app.getHttpServer())
+          .get('/system/healthz')
+          .expect(200)
+          .expect({ ok: true });
+      });
+
+      it('/system/readyz (GET) should work without authentication', () => {
+        return request(app.getHttpServer())
+          .get('/system/readyz')
+          .expect(200)
+          .expect({ ok: true });
+      });
     });
 
-    it('/system/healthz (GET)', () => {
-      return request(app.getHttpServer())
-        .get('/system/healthz')
-        .expect(200)
-        .expect({ ok: true });
-    });
+    describe('Protected endpoints (require authentication)', () => {
+      it('/ (GET) should require authentication', () => {
+        return request(app.getHttpServer())
+          .get('/')
+          .expect(403);
+      });
 
-    it('/system/readyz (GET)', () => {
-      return request(app.getHttpServer())
-        .get('/system/readyz')
-        .expect(200)
-        .expect({ ok: true });
-    });
+      it('/ (GET) should work with valid API key', () => {
+        return request(app.getHttpServer())
+          .get('/')
+          .set(TestUtils.createAuthHeader())
+          .expect(200)
+          .expect({ ok: true });
+      });
 
-    it('/system/metrics (GET)', () => {
-      return request(app.getHttpServer())
-        .get('/system/metrics')
-        .expect(200)
-        .expect('');
-    });
+      it('/ (GET) should reject invalid API key', () => {
+        return request(app.getHttpServer())
+          .get('/')
+          .set(TestUtils.createAuthHeader('invalid-key'))
+          .expect(403);
+      });
 
-    it('/system/version (GET)', () => {
-      return request(app.getHttpServer())
-        .get('/system/version')
-        .expect(200)
-        .expect((res: any) => {
-          // Verify the response has the expected structure
-          // Note: version and revision will be undefined, which gets omitted from JSON
-          expect(res.body).toEqual(
-            expect.objectContaining({
-              created: expect.objectContaining({})
-            })
-          );
-          // The response may not include undefined properties in JSON
-          expect(res.body).toHaveProperty('created');
-        });
-    });
+      it('/system/metrics (GET) should require authentication', () => {
+        return request(app.getHttpServer())
+          .get('/system/metrics')
+          .expect(403);
+      });
 
-    it('/debug-sentry (GET) should return 500', () => {
-      return request(app.getHttpServer())
-        .get('/debug-sentry')
-        .expect(500)
-        .expect((res: any) => {
-          expect(res.body).toHaveProperty('statusCode', 500);
-          expect(res.body).toHaveProperty('message', 'Internal server error');
-          expect(res.body).toHaveProperty('timestamp');
-          expect(res.body).toHaveProperty('path', '/debug-sentry');
-        });
+      it('/system/metrics (GET) should work with valid API key', () => {
+        return request(app.getHttpServer())
+          .get('/system/metrics')
+          .set(TestUtils.createAuthHeader())
+          .expect(200)
+          .expect('');
+      });
+
+      it('/system/version (GET) should require authentication', () => {
+        return request(app.getHttpServer())
+          .get('/system/version')
+          .expect(403);
+      });
+
+      it('/system/version (GET) should work with valid API key', () => {
+        return request(app.getHttpServer())
+          .get('/system/version')
+          .set(TestUtils.createAuthHeader())
+          .expect(200)
+          .expect((res: any) => {
+            // Verify the response has the expected structure
+            // Note: version and revision will be undefined, which gets omitted from JSON
+            expect(res.body).toEqual(
+              expect.objectContaining({
+                created: expect.objectContaining({})
+              })
+            );
+            // The response may not include undefined properties in JSON
+            expect(res.body).toHaveProperty('created');
+          });
+      });
+
+      it('/debug-sentry (GET) should require authentication', () => {
+        return request(app.getHttpServer())
+          .get('/debug-sentry')
+          .expect(403);
+      });
+
+      it('/debug-sentry (GET) should work with valid API key and return 500', () => {
+        return request(app.getHttpServer())
+          .get('/debug-sentry')
+          .set(TestUtils.createAuthHeader())
+          .expect(500)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 500);
+            expect(res.body).toHaveProperty('message', 'Internal server error');
+            expect(res.body).toHaveProperty('timestamp');
+            expect(res.body).toHaveProperty('path', '/debug-sentry');
+          });
+      });
     });
   });
 
@@ -134,31 +176,56 @@ describe('AppController (e2e)', () => {
       }
     });
 
-    it('/test-apns (POST) should return 403 when device ID not configured', () => {
-      return request(notifApp.getHttpServer())
-        .post('/test-apns')
-        .expect(403)
-        .expect((res: any) => {
-          expect(res.body).toHaveProperty('statusCode', 403);
-          expect(res.body).toHaveProperty('message', 'DEMO_DEVICE_ID_IOS not configured');
-        });
+    describe('Authentication tests', () => {
+      it('/test-apns (POST) should require authentication', () => {
+        return request(notifApp.getHttpServer())
+          .post('/test-apns')
+          .expect(403);
+      });
+
+      it('/test-firebase (POST) should require authentication', () => {
+        return request(notifApp.getHttpServer())
+          .post('/test-firebase')
+          .expect(403);
+      });
     });
 
-    it('/test-firebase (POST) should return 403 when device ID not configured', () => {
-      return request(notifApp.getHttpServer())
-        .post('/test-firebase')
-        .expect(403)
-        .expect((res: any) => {
-          expect(res.body).toHaveProperty('statusCode', 403);
-          expect(res.body).toHaveProperty('message', 'DEMO_DEVICE_ID_ANDROID not configured');
-        });
+    describe('With authentication', () => {
+      it('/test-apns (POST) should return 403 when device ID not configured', () => {
+        return request(notifApp.getHttpServer())
+          .post('/test-apns')
+          .set(TestUtils.createAuthHeader())
+          .expect(403)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 403);
+            expect(res.body).toHaveProperty('message', 'DEMO_DEVICE_ID_IOS not configured');
+          });
+      });
+
+      it('/test-firebase (POST) should return 403 when device ID not configured', () => {
+        return request(notifApp.getHttpServer())
+          .post('/test-firebase')
+          .set(TestUtils.createAuthHeader())
+          .expect(403)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 403);
+            expect(res.body).toHaveProperty('message', 'DEMO_DEVICE_ID_ANDROID not configured');
+          });
+      });
     });
   });
 
   describe('404 handling', () => {
-    it('should return 404 for unknown routes', () => {
+    it('should return 404 for unknown routes (authentication not checked for non-existent routes)', () => {
       return request(app.getHttpServer())
         .get('/unknown-route')
+        .expect(404);
+    });
+
+    it('should return 404 for unknown routes with authentication', () => {
+      return request(app.getHttpServer())
+        .get('/unknown-route')
+        .set(TestUtils.createAuthHeader())
         .expect(404);
     });
   });
