@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 import { SentryExceptionFilter } from './sentry-exception.filter';
 import * as Sentry from '@sentry/nestjs';
 
@@ -121,6 +121,49 @@ describe('SentryExceptionFilter', () => {
 
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(404);
+    });
+
+    it('should not report BadRequestException (validation errors) to Sentry', () => {
+      const validationError = new BadRequestException({
+        message: [
+          'deviceToken must be a valid APNs device token (hexadecimal string, 8-512 characters)',
+          'tokenType must be either "apns" for Apple Push Notifications or "firebase" for Firebase Cloud Messaging'
+        ],
+        error: 'Bad Request',
+        statusCode: 400
+      });
+
+      filter.catch(validationError, mockArgumentsHost);
+
+      // Validation errors should NOT be reported to Sentry (they're client errors, not server issues)
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      
+      // Should still return proper error response
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        statusCode: 400,
+        timestamp: expect.any(String),
+        path: '/test-url',
+        message: expect.arrayContaining([
+          expect.stringContaining('deviceToken must be a valid APNs device token'),
+          expect.stringContaining('tokenType must be either "apns"')
+        ]),
+      });
+    });
+
+    it('should not report any 4xx client errors to Sentry', () => {
+      // Test various 4xx status codes to ensure none are reported to Sentry
+      const clientErrorCodes = [400, 401, 403, 404, 409, 422, 429];
+      
+      clientErrorCodes.forEach(statusCode => {
+        jest.clearAllMocks();
+        
+        const exception = new HttpException(`Client Error ${statusCode}`, statusCode);
+        filter.catch(exception, mockArgumentsHost);
+        
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(mockResponse.status).toHaveBeenCalledWith(statusCode);
+      });
     });
   });
 });

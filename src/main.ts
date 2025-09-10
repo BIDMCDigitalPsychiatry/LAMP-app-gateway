@@ -17,6 +17,7 @@ import 'reflect-metadata';
 
 import * as Sentry from "@sentry/nestjs";
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './app.module';
 import { SentryExceptionFilter } from './filters/sentry-exception.filter';
@@ -33,6 +34,22 @@ export async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
       abortOnError: false
     });
+    
+    // Configure global validation pipe with comprehensive validation settings
+    // This ensures all incoming requests are validated against DTOs with detailed error messages
+    app.useGlobalPipes(
+      new ValidationPipe({
+        // Strip properties that are not defined in the DTO (security best practice)
+        whitelist: true,
+        // Throw an error if non-whitelisted properties are provided (strict validation)
+        forbidNonWhitelisted: true,
+        // Automatically transform payloads to DTO instances (enables type conversion)
+        transform: true,
+        // Keep detailed error messages for development and debugging
+        disableErrorMessages: false,
+      }),
+    );
+    
     app.useGlobalFilters(new SentryExceptionFilter());
     app.enableShutdownHooks();
     

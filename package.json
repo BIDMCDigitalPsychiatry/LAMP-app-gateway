@@ -19,6 +19,7 @@
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
+    "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/platform-express": "^11.1.6",
     "@parse/node-apn": "^6.5.0",
     "@sentry/nestjs": "^10.8.0",
