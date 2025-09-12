@@ -8,11 +8,23 @@ export class TestUtils {
    * Create a mock ConfigService with default or custom configuration
    */
   static createMockConfigService(config: any = {}) {
+    const apiKeys = process.env.API_KEYS?.split(',').filter(x => x.length > 0) || ['test-api-key'];
+    
     return {
       get: jest.fn().mockImplementation((key: string) => {
         if (key === 'app') {
           return {
             port: 3000,
+            host: "0.0.0.0",
+            auth: {
+              bearer: {
+                keyWhitelist: apiKeys
+              },
+              publicPaths: [
+                "/system/healthz",
+                "/system/readyz"
+              ]
+            },
             firebase: {
               serviceAccountFileContents: JSON.stringify({
                 "type": "service_account",
@@ -37,6 +49,15 @@ export class TestUtils {
           };
         }
         return config[key];
+      }),
+      getOrThrow: jest.fn().mockImplementation((key: string) => {
+        if (key === 'app.auth.publicPaths') {
+          return ["/system/healthz", "/system/readyz"];
+        }
+        if (key === 'app.auth.bearer.keyWhitelist') {
+          return apiKeys;
+        }
+        throw new Error(`Configuration key '${key}' does not exist`);
       }),
     };
   }
@@ -134,5 +155,21 @@ export class TestUtils {
         });
       }
     });
+  }
+
+  /**
+   * Get the test API key from environment variables
+   */
+  static getTestApiKey(): string {
+    const apiKeys = process.env.API_KEYS?.split(',').filter(x => x.length > 0);
+    return apiKeys?.[0] || 'test-api-key';
+  }
+
+  /**
+   * Create authorization header with Bearer token
+   */
+  static createAuthHeader(apiKey?: string): { Authorization: string } {
+    const key = apiKey || TestUtils.getTestApiKey();
+    return { Authorization: `Bearer ${key}` };
   }
 }

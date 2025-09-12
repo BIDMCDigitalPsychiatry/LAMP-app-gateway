@@ -7,7 +7,8 @@ export interface AppConfig {
   auth: {
     bearer: {
       keyWhitelist: string[]
-    }
+    },
+    publicPaths: string[]
   }
 }
 
@@ -86,7 +87,11 @@ export default registerAs('app', (): AppConfig => {
     auth: {
       bearer: {
         keyWhitelist: apiKeys
-      }
+      },
+      publicPaths: [
+        "/system/healthz",
+        "/system/readyz"
+      ]
     },
   };
 });
