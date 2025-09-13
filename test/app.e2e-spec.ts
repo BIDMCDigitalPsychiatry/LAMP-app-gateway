@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, HttpStatus } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { ConfigService } from '@nestjs/config';
 import { TestUtils } from '../src/test/test-utils';
-import { FirebaseMessagingService } from '../src/modules/notifications/firebase-messaging.service';
-import { ApplePushNotificationService } from '../src/modules/notifications/apple-push-notification.service';
+import { FirebaseMessagingService } from '../src/modules/notifications/providers/firebase-messaging.service';
+import { ApplePushNotificationService } from '../src/modules/notifications/providers/apple-push-notification.service';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -198,7 +198,7 @@ describe('AppController (e2e)', () => {
           .expect(403)
           .expect((res: any) => {
             expect(res.body).toHaveProperty('statusCode', 403);
-            expect(res.body).toHaveProperty('message', 'DEMO_DEVICE_ID_IOS not configured');
+            expect(res.body).toHaveProperty('message', 'Forbidden resource');
           });
       });
 
@@ -209,8 +209,201 @@ describe('AppController (e2e)', () => {
           .expect(403)
           .expect((res: any) => {
             expect(res.body).toHaveProperty('statusCode', 403);
-            expect(res.body).toHaveProperty('message', 'DEMO_DEVICE_ID_ANDROID not configured');
+            expect(res.body).toHaveProperty('message', 'Forbidden resource');
           });
+      });
+    });
+
+    describe('Integration tests with working device IDs', () => {
+      let integrationApp: INestApplication;
+      let mockApnsService: any;
+      let mockFirebaseService: any;
+      
+      beforeAll(async () => {
+        // Reset mocks before starting
+        TestUtils.resetMocks();
+        mockApnsService = TestUtils.mocks.apnsService;
+        mockFirebaseService = TestUtils.mocks.firebaseService;
+        
+        // Set up env vars for working tests
+        process.env.DEMO_DEVICE_ID_IOS = 'test-ios-device-token';
+        process.env.DEMO_DEVICE_ID_ANDROID = 'test-android-device-token';
+
+        const moduleFixture: TestingModule = await Test.createTestingModule({
+          imports: [AppModule],
+        })
+          .overrideProvider(ConfigService)
+          .useValue(TestUtils.createMockConfigService())
+          .overrideProvider(FirebaseMessagingService)
+          .useValue(mockFirebaseService)
+          .overrideProvider(ApplePushNotificationService)
+          .useValue(mockApnsService)
+          .compile();
+
+        integrationApp = moduleFixture.createNestApplication();
+        const { SentryExceptionFilter } = require('../src/filters/sentry-exception.filter');
+        integrationApp.useGlobalFilters(new SentryExceptionFilter());
+        await integrationApp.init();
+      });
+
+      afterAll(async () => {
+        if (integrationApp) {
+          await integrationApp.close();
+        }
+        // Clean up env vars
+        delete process.env.DEMO_DEVICE_ID_IOS;
+        delete process.env.DEMO_DEVICE_ID_ANDROID;
+      });
+
+      beforeEach(() => {
+        // Reset mocks before each test
+        mockApnsService.sendMessage.mockClear();
+        mockFirebaseService.sendMessage.mockClear();
+      });
+
+      describe('APNS Integration', () => {
+        it('POST /test-apns should make HTTP request and call APNS service with correct device token', async () => {
+          const response = await request(integrationApp.getHttpServer())
+            .post('/test-apns')
+            .set(TestUtils.createAuthHeader())
+            .expect(201)
+            .expect('ok');
+
+          // Verify the APNS service sendMessage was called with the correct arguments
+          expect(mockApnsService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockApnsService.sendMessage).toHaveBeenCalledWith(
+            { service: 'apns', token: 'test-ios-device-token' },
+            expect.objectContaining({
+              title: expect.any(String),
+              body: expect.any(String)
+            })
+          );
+          
+          // Verify Firebase service was NOT called
+          expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('POST /generic/welcome should call APNS sendMessage with correct arguments', async () => {
+          const payload = {
+            destination: { service: 'apns', token: 'custom-ios-token' },
+            options: {}
+          };
+
+          await request(integrationApp.getHttpServer())
+            .post('/generic/welcome')
+            .set(TestUtils.createAuthHeader())
+            .send(payload)
+            .expect(201)
+            .expect('ok');
+
+          // Verify APNS sendMessage was called with correct destination and message structure
+          expect(mockApnsService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockApnsService.sendMessage).toHaveBeenCalledWith(
+            { service: 'apns', token: 'custom-ios-token' },
+            expect.objectContaining({
+              title: 'Welcome!',
+              body: 'Welcome to LAMP'
+            })
+          );
+          
+          // Verify Firebase was NOT called
+          expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('POST /generic/activity-reminder should call APNS sendMessage with correct arguments', async () => {
+          const payload = {
+            destination: { service: 'apns', token: 'activity-ios-token' },
+            options: {}
+          };
+
+          await request(integrationApp.getHttpServer())
+            .post('/generic/activity-reminder')
+            .set(TestUtils.createAuthHeader())
+            .send(payload)
+            .expect(201)
+            .expect('ok');
+
+          expect(mockApnsService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockApnsService.sendMessage).toHaveBeenCalledWith(
+            { service: 'apns', token: 'activity-ios-token' },
+            expect.objectContaining({
+              title: 'Activity waiting',
+              body: 'You have an activity awaiting completion'
+            })
+          );
+        });
+
+        it('POST /generic/new-message should call APNS sendMessage with correct arguments', async () => {
+          const payload = {
+            destination: { service: 'apns', token: 'message-ios-token' },
+            options: {}
+          };
+
+          await request(integrationApp.getHttpServer())
+            .post('/generic/new-message')
+            .set(TestUtils.createAuthHeader())
+            .send(payload)
+            .expect(201)
+            .expect('ok');
+
+          expect(mockApnsService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockApnsService.sendMessage).toHaveBeenCalledWith(
+            { service: 'apns', token: 'message-ios-token' },
+            expect.objectContaining({
+              title: 'Message Received',
+              body: 'Someone has sent you a message'
+            })
+          );
+        });
+      });
+
+      describe('Firebase Integration', () => {
+        it('POST /test-firebase should make HTTP request and call Firebase service with correct device token', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/test-firebase')
+            .set(TestUtils.createAuthHeader())
+            .expect(201)
+            .expect('ok');
+
+          // Verify Firebase service sendMessage was called with the correct arguments
+          expect(mockFirebaseService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockFirebaseService.sendMessage).toHaveBeenCalledWith(
+            { service: 'firebase', token: 'test-android-device-token' },
+            expect.objectContaining({
+              title: expect.any(String),
+              body: expect.any(String)
+            })
+          );
+          
+          // Verify APNS service was NOT called
+          expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('POST /generic/welcome should call Firebase sendMessage with correct arguments', async () => {
+          const payload = {
+            destination: { service: 'firebase', token: 'custom-android-token' },
+            options: {}
+          };
+
+          await request(integrationApp.getHttpServer())
+            .post('/generic/welcome')
+            .set(TestUtils.createAuthHeader())
+            .send(payload)
+            .expect(201)
+            .expect('ok');
+
+          expect(mockFirebaseService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockFirebaseService.sendMessage).toHaveBeenCalledWith(
+            { service: 'firebase', token: 'custom-android-token' },
+            expect.objectContaining({
+              title: 'Welcome!',
+              body: 'Welcome to LAMP'
+            })
+          );
+          
+          // Verify APNS was NOT called
+          expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
+        });
       });
     });
   });

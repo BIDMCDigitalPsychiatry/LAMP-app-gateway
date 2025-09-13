@@ -114,12 +114,12 @@ export class TestUtils {
    */
   static mocks = {
     firebaseService: {
-      sendPush: jest.fn().mockResolvedValue('message-id-123'),
+      sendMessage: jest.fn().mockResolvedValue(undefined),
       sendDemoNotification: jest.fn().mockResolvedValue('message-id-123'),
     },
 
     apnsService: {
-      sendPush: jest.fn().mockResolvedValue(null),
+      sendMessage: jest.fn().mockResolvedValue(undefined),
       sendDemoNotification: jest.fn().mockResolvedValue(null),
     },
 

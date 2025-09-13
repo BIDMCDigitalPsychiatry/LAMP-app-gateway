@@ -1,7 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { SendActivityReminderNotePayload, SendMessageReceivedNotePayload, SendWelcomeNotePayload } from './schemas/notification-controller-requests';
 import { invariant } from '../../utils/invariant';
 import { DispatcherService } from './dispatcher.service';
+import { EnvRequirementGuard } from '../../guards/env-requirement.guard';
 
 @Controller()
 export class NotificationsController {
@@ -17,6 +18,7 @@ export class NotificationsController {
   }
 
   @Post('/test-apns')
+  @UseGuards(new EnvRequirementGuard('DEMO_DEVICE_ID_IOS'))
   async sendDemoApnsNote(): Promise<string> {
     invariant((this.demoDeviceIdIos !== null), "Cannot send APNs demo notification if `DEMO_DEVICE_ID_IOS` is not set")
 
@@ -29,6 +31,7 @@ export class NotificationsController {
   }
 
   @Post('/test-firebase')
+  @UseGuards(new EnvRequirementGuard('DEMO_DEVICE_ID_ANDROID'))
   async sendDemoFirebaseNote(): Promise<string> {
     invariant((this.demoDeviceIdAndroid !== null), "Cannot send Firebase demo notification if `DEMO_DEVICE_ID_ANDROID` is not set")
 
