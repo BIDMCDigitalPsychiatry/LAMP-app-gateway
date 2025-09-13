@@ -1,5 +1,5 @@
 import { registerAs } from "@nestjs/config";
-import { FirebaseConfig } from "../firebase-messaging.service";
+import { FirebaseConfig } from "../providers/firebase-messaging.service";
 
 export default registerAs('firebase', (): FirebaseConfig => {
   const {

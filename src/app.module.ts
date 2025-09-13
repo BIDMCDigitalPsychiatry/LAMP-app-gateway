@@ -6,8 +6,9 @@ import { SystemModule } from './modules/system/system.module';
 import { SentryModule } from "@sentry/nestjs/setup";
 import apnsConfig from './modules/notifications/config/apns.config';
 import firebaseConfig from './modules/notifications/config/firebase.config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ApiKeyGuard } from './guards/api-key.guard';
+import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
 
 @Module({
@@ -40,6 +41,14 @@ import { ApiKeyGuard } from './guards/api-key.guard';
     {
       provide: APP_GUARD,
       useClass: ApiKeyGuard,
+    },
+    {
+      provide: APP_PIPE,
+      useClass: ZodValidationPipe,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ZodSerializerInterceptor,
     },
   ],
 })

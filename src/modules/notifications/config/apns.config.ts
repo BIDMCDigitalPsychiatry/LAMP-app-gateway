@@ -1,5 +1,5 @@
 import { registerAs } from "@nestjs/config";
-import { ApnsConfig } from "../apple-push-notification.service";
+import { ApnsConfig } from "../providers/apple-push-notification.service";
 
 export default registerAs('apns', (): ApnsConfig => {
   const {

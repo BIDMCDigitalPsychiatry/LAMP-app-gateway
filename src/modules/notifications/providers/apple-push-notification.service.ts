@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { Notification, Provider } from "@parse/node-apn";
-import apnsConfig from './config/apns.config';
+import apnsConfig from '../config/apns.config';
+import { Message, IMessagingService, NotificationDestination } from '../domain';
+import { invariant } from '../../../utils/invariant';
 
 var apn = require('@parse/node-apn');
 
 export type DeviceToken = string;
-
-interface PushNotificationContent {}
 
 export interface ApnsConfig {
   keyFileContents: string,
@@ -18,7 +18,7 @@ export interface ApnsConfig {
 }
 
 @Injectable()
-export class ApplePushNotificationService {
+export class ApplePushNotificationService implements IMessagingService {
   private readonly connection: Provider;
   private readonly topic: string;
 
@@ -40,14 +40,12 @@ export class ApplePushNotificationService {
     this.connection = new apn.Provider(options);
   }
 
-  public async sendPush(deviceId: DeviceToken, notification: Notification) {
-    try {
-      await this.connection.send(notification, deviceId);
-    } catch (error) {
-      console.error("Error sending apns note: ", error);
-    }
+  async sendMessage({ service, token }: NotificationDestination, message: Message): Promise<void> {
+    invariant(service === "apns", `Message intended for '${service}' delivery, not APNs`)
 
-    return null;
+    await this.connection.send(this.toApnsNotification(message), token);
+
+    return
   }
 
   public async sendDemoNotification(deviceId: DeviceToken) {
@@ -57,8 +55,6 @@ export class ApplePushNotificationService {
     note.badge = 3;
     note.sound = "ping.aiff";
     note.alert = "\uD83D\uDCE7 \u2709 You have a new message";
-    note.payload = {'messageFrom': 'John Appleseed'};
-    note.topic = this.topic;
 
     try {
       await this.connection.send(note, deviceId);
@@ -67,5 +63,19 @@ export class ApplePushNotificationService {
     }
 
     return null;
+  }
+
+  private toApnsNotification(msg: Message) : Notification {
+    return new Notification({
+      pushType: "alert",
+      topic: this.topic,
+      title: msg.title,
+      body: msg.body,
+
+      expiry: Math.floor(Date.now() / 1000) + 3600, // Expires 1 hour from now.
+      badge: 3,
+      sound: "ping.aiff",
+      alert: "\uD83D\uDCE7 \u2709 You have a new message"
+    })
   }
 }
