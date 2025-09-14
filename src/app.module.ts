@@ -9,6 +9,7 @@ import firebaseConfig from './modules/notifications/config/firebase.config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ApiKeyGuard } from './guards/api-key.guard';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
+import { LoggerModule } from 'nestjs-pino';
 
 
 @Module({
@@ -33,6 +34,12 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
         // validatePredefined: false,
         abortEarly: false
       },
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        quietReqLogger: true,
+        quietResLogger: true
+      }
     }),
     NotificationsModule,
     SystemModule,

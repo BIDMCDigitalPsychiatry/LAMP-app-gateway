@@ -20,6 +20,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { ConfigService } from "@nestjs/config";
+import { Logger } from "nestjs-pino";
 
 export async function bootstrap() {
   try {
@@ -30,8 +31,10 @@ export async function bootstrap() {
     );
 
     const app = await NestFactory.create(AppModule, {
-      abortOnError: false
+      abortOnError: false,
+      bufferLogs: true
     });
+    app.useLogger(app.get(Logger))
     app.enableShutdownHooks();
     
     console.log(
