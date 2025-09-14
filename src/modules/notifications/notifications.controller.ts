@@ -45,21 +45,21 @@ export class NotificationsController {
 
   @Post('/generic/welcome')
   async sendWelcomeNote(@Body() payload: SendWelcomeNotePayload): Promise<string> {
-    await this.dispatcher.sendWelcomeNote(payload.destination, payload.options)
+    await this.dispatcher.sendWelcomeNote(payload.destination, payload.options || {})
     return "ok"
   }
 
 
   @Post('/generic/activity-reminder')
   async sendActivityReminderNote(@Body() payload: SendActivityReminderNotePayload): Promise<string> {
-    await this.dispatcher.sendActivityReminderNote(payload.destination, payload.options)
+    await this.dispatcher.sendActivityReminderNote(payload.destination, payload.options || {})
     return "ok"
   }
 
 
   @Post('/generic/new-message')
   async sendMessageReceivedNote(@Body() payload: SendMessageReceivedNotePayload): Promise<string> {
-    await this.dispatcher.sendMessageReceivedNote(payload.destination, payload.options)
+    await this.dispatcher.sendMessageReceivedNote(payload.destination, payload.options || {})
     return "ok"
   }
 }
