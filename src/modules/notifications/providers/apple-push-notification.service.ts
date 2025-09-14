@@ -48,34 +48,19 @@ export class ApplePushNotificationService implements IMessagingService {
     return
   }
 
-  public async sendDemoNotification(deviceId: DeviceToken) {
-    const note: Notification = new Notification();
-
-    note.expiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-    note.badge = 3;
-    note.sound = "ping.aiff";
-    note.alert = "\uD83D\uDCE7 \u2709 You have a new message";
-
-    try {
-      await this.connection.send(note, deviceId);
-    } catch (error) {
-      console.error("Error sending apns note: ", error);
-    }
-
-    return null;
-  }
-
   private toApnsNotification(msg: Message) : Notification {
     return new Notification({
       pushType: "alert",
       topic: this.topic,
       title: msg.title,
       body: msg.body,
-
-      expiry: Math.floor(Date.now() / 1000) + 3600, // Expires 1 hour from now.
-      badge: 3,
-      sound: "ping.aiff",
-      alert: "\uD83D\uDCE7 \u2709 You have a new message"
+      expiry: msg.apnsExpiry || 0
     })
   }
+}
+
+export enum ApnsPriority {
+  SEND_IMMEDIATELY = 10,
+  RESPECT_BATTERY_STATE = 5,
+  PRIORITIZE_BATTERY_STATE = 1
 }

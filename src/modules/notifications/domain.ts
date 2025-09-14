@@ -1,6 +1,7 @@
 import { ActivityReminderNoteParams } from "./messages/activity-reminder-note.dto"
 import { MessageReceivedNoteParams } from "./messages/message-received-note.dto"
 import { WelcomeNoteParams } from "./messages/welcome-note.dto"
+import { ApnsPriority } from "./providers/apple-push-notification.service"
 
 export type ServiceKey = "apns" | "firebase"
 interface NotificationDestinationBase {
@@ -27,6 +28,8 @@ export type NotificationDestination =
 export interface Message {
   readonly title: string;
   readonly body: string;
+  readonly apnsExpiry: number;
+  readonly apnsPriority: ApnsPriority;
 }
 
 export interface IMessagingService {
