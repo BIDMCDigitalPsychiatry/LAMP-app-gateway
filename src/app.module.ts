@@ -3,10 +3,10 @@ import { ConfigModule } from '@nestjs/config';
 import configuration, { schema } from './config/app.config';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SystemModule } from './modules/system/system.module';
-import { SentryModule } from "@sentry/nestjs/setup";
+import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import apnsConfig from './modules/notifications/config/apns.config';
 import firebaseConfig from './modules/notifications/config/firebase.config';
-import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ApiKeyGuard } from './guards/api-key.guard';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 
@@ -38,6 +38,16 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
     SystemModule,
   ],
   providers: [
+    // Note: SentryGlobalFilter must be the first provider in the list. I
+    // suspect this allows it to defer to specialized filters defined later in
+    // the list which will have precidence.
+    //
+    // See
+    // https://docs.sentry.io/platforms/javascript/guides/nestjs/#not-using-a-custom-global-filter
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter
+    },
     {
       provide: APP_GUARD,
       useClass: ApiKeyGuard,

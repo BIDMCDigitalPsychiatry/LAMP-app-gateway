@@ -19,7 +19,6 @@ import * as Sentry from "@sentry/nestjs";
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
-import { SentryExceptionFilter } from './filters/sentry-exception.filter';
 import { ConfigService } from "@nestjs/config";
 
 export async function bootstrap() {
@@ -33,7 +32,6 @@ export async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
       abortOnError: false
     });
-    app.useGlobalFilters(new SentryExceptionFilter());
     app.enableShutdownHooks();
     
     console.log(

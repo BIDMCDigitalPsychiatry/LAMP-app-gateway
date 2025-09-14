@@ -27,10 +27,6 @@ describe('AppController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     
-    // Apply the same exception filter as in main.ts
-    const { SentryExceptionFilter } = require('../src/filters/sentry-exception.filter');
-    app.useGlobalFilters(new SentryExceptionFilter());
-    
     await app.init();
   });
 
@@ -131,8 +127,6 @@ describe('AppController (e2e)', () => {
           .expect((res: any) => {
             expect(res.body).toHaveProperty('statusCode', 500);
             expect(res.body).toHaveProperty('message', 'Internal server error');
-            expect(res.body).toHaveProperty('timestamp');
-            expect(res.body).toHaveProperty('path', '/debug-sentry');
           });
       });
     });
@@ -161,8 +155,6 @@ describe('AppController (e2e)', () => {
         .compile();
 
       notifApp = moduleFixture.createNestApplication();
-      const { SentryExceptionFilter } = require('../src/filters/sentry-exception.filter');
-      notifApp.useGlobalFilters(new SentryExceptionFilter());
       await notifApp.init();
 
       // Restore env vars after app creation
@@ -241,8 +233,6 @@ describe('AppController (e2e)', () => {
           .compile();
 
         integrationApp = moduleFixture.createNestApplication();
-        const { SentryExceptionFilter } = require('../src/filters/sentry-exception.filter');
-        integrationApp.useGlobalFilters(new SentryExceptionFilter());
         await integrationApp.init();
       });
 
@@ -405,6 +395,155 @@ describe('AppController (e2e)', () => {
           expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
         });
       });
+
+      describe('Validation tests', () => {
+        it('POST /generic/welcome should reject empty body', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/generic/welcome')
+            .set(TestUtils.createAuthHeader())
+            .send({})
+            .expect(400)
+            .expect((res: any) => {
+              expect(res.body).toHaveProperty('statusCode', 400);
+              expect(res.body).toHaveProperty('message');
+              expect(res.body.message).toContain('Validation failed');
+            });
+        });
+
+        it('POST /generic/welcome should reject missing destination field', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/generic/welcome')
+            .set(TestUtils.createAuthHeader())
+            .send({ options: {} })
+            .expect(400)
+            .expect((res: any) => {
+              expect(res.body).toHaveProperty('statusCode', 400);
+              expect(res.body).toHaveProperty('message');
+              expect(res.body.message).toContain('Validation failed');
+            });
+        });
+
+        it('POST /generic/welcome should reject invalid destination service', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/generic/welcome')
+            .set(TestUtils.createAuthHeader())
+            .send({ 
+              destination: { service: 'invalid', token: 'test-token' },
+              options: {}
+            })
+            .expect(400)
+            .expect((res: any) => {
+              expect(res.body).toHaveProperty('statusCode', 400);
+              expect(res.body).toHaveProperty('message');
+            });
+        });
+
+        it('POST /generic/welcome should reject missing token in destination', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/generic/welcome')
+            .set(TestUtils.createAuthHeader())
+            .send({ 
+              destination: { service: 'apns' },
+              options: {}
+            })
+            .expect(400)
+            .expect((res: any) => {
+              expect(res.body).toHaveProperty('statusCode', 400);
+              expect(res.body).toHaveProperty('message');
+              expect(res.body.message).toContain('Validation failed');
+            });
+        });
+
+        it('POST /generic/activity-reminder should reject empty body', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/generic/activity-reminder')
+            .set(TestUtils.createAuthHeader())
+            .send({})
+            .expect(400);
+        });
+
+        it('POST /generic/new-message should reject empty body', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/generic/new-message')
+            .set(TestUtils.createAuthHeader())
+            .send({})
+            .expect(400);
+        });
+      });
+    });
+
+  });
+
+  describe('Validation error handling', () => {
+    it('should return detailed validation errors for missing required fields', () => {
+      return request(app.getHttpServer())
+        .post('/generic/welcome')
+        .set(TestUtils.createAuthHeader())
+        .send({})
+        .expect(400)
+        .expect((res: any) => {
+          expect(res.body).toHaveProperty('statusCode', 400);
+          expect(res.body).toHaveProperty('message', 'Validation failed');
+          expect(res.body).toHaveProperty('errors');
+          expect(Array.isArray(res.body.errors)).toBe(true);
+          expect(res.body.errors.length).toBeGreaterThan(0);
+          // Should have error for missing 'destination' field
+          expect(res.body.errors.some((error: any) =>
+            error.path && error.path.includes('destination')
+          )).toBe(true);
+        });
+    });
+
+    it('should return detailed validation errors for invalid field types', () => {
+      return request(app.getHttpServer())
+        .post('/generic/welcome')
+        .set(TestUtils.createAuthHeader())
+        .send({
+          destination: {
+            service: 'invalid-service',
+            token: 123 // Should be string
+          }
+        })
+        .expect(400)
+        .expect((res: any) => {
+          expect(res.body).toHaveProperty('statusCode', 400);
+          expect(res.body).toHaveProperty('message', 'Validation failed');
+          expect(res.body).toHaveProperty('errors');
+          expect(Array.isArray(res.body.errors)).toBe(true);
+          expect(res.body.errors.length).toBeGreaterThan(0);
+
+          // Should have specific field-level errors
+          const errors = res.body.errors;
+          expect(errors.some((error: any) =>
+            error.path && error.message && error.code
+          )).toBe(true);
+        });
+    });
+
+    it('should return detailed validation errors for discriminated union mismatch', () => {
+      return request(app.getHttpServer())
+        .post('/generic/welcome')
+        .set(TestUtils.createAuthHeader())
+        .send({
+          destination: {
+            service: 'apns'
+            // Missing required 'token' field for apns service
+          }
+        })
+        .expect(400)
+        .expect((res: any) => {
+          expect(res.body).toHaveProperty('statusCode', 400);
+          expect(res.body).toHaveProperty('message', 'Validation failed');
+          expect(res.body).toHaveProperty('errors');
+          expect(Array.isArray(res.body.errors)).toBe(true);
+          expect(res.body.errors.length).toBeGreaterThan(0);
+
+          // Should include path information for the missing token
+          const errors = res.body.errors;
+          expect(errors.some((error: any) =>
+            error.path && (error.path.includes('token') || error.path.includes('destination'))
+          )).toBe(true);
+        });
     });
   });
 
