@@ -37,6 +37,7 @@ import { LoggerModule } from 'nestjs-pino';
     }),
     LoggerModule.forRoot({
       pinoHttp: {
+        base: undefined, // to disable pid & hostname
         quietReqLogger: true,
         quietResLogger: true
       }
