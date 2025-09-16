@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { FirebaseMessagingService } from './modules/notifications/firebase-messaging.service';
-import { ApplePushNotificationService } from './modules/notifications/apple-push-notification.service';
+import { FirebaseMessagingService } from './modules/notifications/providers/firebase-messaging.service';
+import { ApplePushNotificationService } from './modules/notifications/providers/apple-push-notification.service';
 import { SystemController } from './modules/system/system.controller';
 import { NotificationsController } from './modules/notifications/notifications.controller';
 import { TestUtils } from './test/test-utils';

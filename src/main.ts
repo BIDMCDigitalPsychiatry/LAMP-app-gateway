@@ -19,8 +19,9 @@ import * as Sentry from "@sentry/nestjs";
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
-import { SentryExceptionFilter } from './filters/sentry-exception.filter';
 import { ConfigService } from "@nestjs/config";
+import { Logger } from "nestjs-pino";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 export async function bootstrap() {
   try {
@@ -30,11 +31,13 @@ export async function bootstrap() {
       '-- { Phase: Wire Services } -------------------------------------------'
     );
 
-    const app = await NestFactory.create(AppModule, {
-      abortOnError: false
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      abortOnError: false,
+      bufferLogs: true
     });
-    app.useGlobalFilters(new SentryExceptionFilter());
+    app.useLogger(app.get(Logger))
     app.enableShutdownHooks();
+    app.disable('x-powered-by')
     
     console.log(
       '-- { Phase: Launch Server } -------------------------------------------'

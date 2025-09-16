@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { FirebaseMessagingService } from './firebase-messaging.service';
-import { ApplePushNotificationService } from './apple-push-notification.service';
+import { FirebaseMessagingService } from './providers/firebase-messaging.service';
+import { ApplePushNotificationService } from './providers/apple-push-notification.service';
 import { NotificationsController } from './notifications.controller';
+import { DispatcherService } from './dispatcher.service';
 
 @Module({
   imports: [],
@@ -9,10 +10,9 @@ import { NotificationsController } from './notifications.controller';
   providers: [
     FirebaseMessagingService,
     ApplePushNotificationService,
+    DispatcherService
   ],
   exports: [
-    FirebaseMessagingService,
-    ApplePushNotificationService,
   ],
 })
 export class NotificationsModule {}

@@ -1,41 +1,66 @@
-import { Controller, Post, HttpStatus, HttpException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { FirebaseMessagingService } from './firebase-messaging.service';
-import { ApplePushNotificationService } from './apple-push-notification.service';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { SendActivityReminderNotePayload, SendMessageReceivedNotePayload, SendWelcomeNotePayload } from './schemas/notification-controller-requests';
+import { invariant } from '../../utils/invariant';
+import { DispatcherService } from './dispatcher.service';
+import { EnvRequirementGuard } from '../../guards/env-requirement.guard';
 
 @Controller()
 export class NotificationsController {
-  private readonly demoDeviceIdAndroid: string | undefined;
-  private readonly demoDeviceIdIos: string | undefined;
+  private readonly demoDeviceIdAndroid: string | null;
+  private readonly demoDeviceIdIos: string | null;
 
   constructor(
-    private readonly firebaseService: FirebaseMessagingService,
-    private readonly apnsService: ApplePushNotificationService,
-    private readonly configService: ConfigService
+    private readonly dispatcher: DispatcherService,
   ) {
-    this.demoDeviceIdAndroid = process.env.DEMO_DEVICE_ID_ANDROID;
-    this.demoDeviceIdIos = process.env.DEMO_DEVICE_ID_IOS;
+    this.demoDeviceIdAndroid = process.env.DEMO_DEVICE_ID_ANDROID || null;
+    this.demoDeviceIdIos = process.env.DEMO_DEVICE_ID_IOS || null;
+    this.dispatcher = dispatcher;
   }
 
   @Post('/test-apns')
+  @UseGuards(new EnvRequirementGuard('DEMO_DEVICE_ID_IOS'))
   async sendDemoApnsNote(): Promise<string> {
-    if (!this.demoDeviceIdIos) {
-      console.warn("Env var `DEMO_DEVICE_ID_IOS` is not set. Skipping demo ios push notification.");
-      throw new HttpException('DEMO_DEVICE_ID_IOS not configured', HttpStatus.FORBIDDEN);
-    }
+    invariant((this.demoDeviceIdIos !== null), "Cannot send APNs demo notification if `DEMO_DEVICE_ID_IOS` is not set")
 
-    await this.apnsService.sendDemoNotification(this.demoDeviceIdIos);
+    await this.dispatcher.sendDemoNote({
+      service: "apns",
+      token: this.demoDeviceIdIos
+    })
+
     return "ok";
   }
 
   @Post('/test-firebase')
+  @UseGuards(new EnvRequirementGuard('DEMO_DEVICE_ID_ANDROID'))
   async sendDemoFirebaseNote(): Promise<string> {
-    if (!this.demoDeviceIdAndroid) {
-      console.warn("Env var `DEMO_DEVICE_ID_ANDROID` is not set. Skipping demo firebase push notification.");
-      throw new HttpException('DEMO_DEVICE_ID_ANDROID not configured', HttpStatus.FORBIDDEN);
-    }
+    invariant((this.demoDeviceIdAndroid !== null), "Cannot send Firebase demo notification if `DEMO_DEVICE_ID_ANDROID` is not set")
 
-    await this.firebaseService.sendDemoNotification(this.demoDeviceIdAndroid);
+    await this.dispatcher.sendDemoNote({
+      service: "firebase",
+      token: this.demoDeviceIdAndroid
+    })
+
     return "ok";
   }
+
+  @Post('/generic/welcome')
+  async sendWelcomeNote(@Body() payload: SendWelcomeNotePayload): Promise<string> {
+    await this.dispatcher.sendWelcomeNote(payload.destination, payload.options || {})
+    return "ok"
+  }
+
+
+  @Post('/generic/activity-reminder')
+  async sendActivityReminderNote(@Body() payload: SendActivityReminderNotePayload): Promise<string> {
+    await this.dispatcher.sendActivityReminderNote(payload.destination, payload.options || {})
+    return "ok"
+  }
+
+
+  @Post('/generic/new-message')
+  async sendMessageReceivedNote(@Body() payload: SendMessageReceivedNotePayload): Promise<string> {
+    await this.dispatcher.sendMessageReceivedNote(payload.destination, payload.options || {})
+    return "ok"
+  }
 }
+
