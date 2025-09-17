@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import configuration, { schema } from './config/app.config';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -10,6 +10,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ApiKeyGuard } from './guards/api-key.guard';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { LoggerModule } from 'nestjs-pino';
+import { randomUUID } from 'node:crypto';
 
 
 @Module({
@@ -39,8 +40,24 @@ import { LoggerModule } from 'nestjs-pino';
       pinoHttp: {
         base: undefined, // to disable pid & hostname
         quietReqLogger: true,
-        quietResLogger: true
-      }
+        quietResLogger: true,
+        level: process.env.LOG_LEVEL || "info",
+        genReqId: function (req) {
+          // Use x-request-id if available, otherwise generate a UUID
+          return req.headers['x-request-id'] || randomUUID();
+        },
+        serializers: {
+          req: (req) => ({
+            method: req.method,
+            url: req.url,
+          })
+        }
+      },
+      exclude: [
+        { path: "/system/healthz", method: RequestMethod.GET },
+        { path: "/system/readyz", method: RequestMethod.GET },
+        { path: "/system/metrics", method: RequestMethod.GET },
+      ]
     }),
     NotificationsModule,
     SystemModule,
