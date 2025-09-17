@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getMessaging, Messaging, Notification, TokenMessage } from 'firebase-admin/messaging';
 import firebaseConfig from '../config/firebase.config';
-import { Message, IMessagingService, NotificationDestination } from '../domain';
+import { Message, IMessagingService, NotificationDestination, MessageDispatchResult } from '../domain';
 import { invariant } from '../../../utils/invariant';
 
 export type FirebaseToken = string;
@@ -14,6 +14,7 @@ export interface FirebaseConfig {
 @Injectable()
 export class FirebaseMessagingService implements IMessagingService {
   private readonly messaging: Messaging;
+  private readonly logger = new Logger(FirebaseMessagingService.name);
 
   constructor(
     @Inject(firebaseConfig.KEY)
@@ -25,7 +26,7 @@ export class FirebaseMessagingService implements IMessagingService {
     this.messaging = getMessaging(app);
   }
 
-  async sendMessage({ service, token }: NotificationDestination, message: Message): Promise<void> {
+  async sendMessage({ service, token }: NotificationDestination, message: Message): Promise<MessageDispatchResult> {
     invariant(service === "firebase", `Message intended for '${service}' delivery, not Firebase`)
 
     const tokenMessage : TokenMessage = {
@@ -33,8 +34,22 @@ export class FirebaseMessagingService implements IMessagingService {
       notification: this.toFirebaseNotification(message)
     }
 
-    await this.messaging.send(tokenMessage)
-    return
+    this.logger.log(`Sending ${message.type}(${message.id}) via Firebase Messaging`)
+    try {
+      const result = await this.messaging.send(tokenMessage)
+      return {
+        messageId: message.id,
+        vendorMessageId: result,
+        successful: true
+      }
+    } catch(err) {
+      this.logger.error(`Sending ${message.type}(${message.id}) failed`, err)
+      return {
+        messageId: message.id,
+        vendorMessageId: undefined,
+        successful: false
+      }
+    }
   }
 
   private toFirebaseNotification(msg: Message) : Notification {

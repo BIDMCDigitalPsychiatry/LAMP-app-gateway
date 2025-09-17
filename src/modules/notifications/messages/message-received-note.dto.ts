@@ -1,3 +1,4 @@
+import { randomUUID, UUID } from "node:crypto";
 import { Message } from "../domain";
 import { ApnsPriority } from "../providers/apple-push-notification.service";
 
@@ -10,9 +11,13 @@ export class MessageReceivedNote implements Message {
     this.title = "Message Received"
     this.body = "Someone has sent you a message"
     this.apnsExpiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-    this.apnsPriority = ApnsPriority.SEND_IMMEDIATELY
+    this.apnsPriority = ApnsPriority.SEND_IMMEDIATELY;
+    this.id = randomUUID()
+    this.type = MessageReceivedNote.name
   }
 
+  readonly type: string;
+  readonly id: UUID;
   readonly apnsExpiry: number;
   readonly apnsPriority: ApnsPriority;
 

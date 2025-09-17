@@ -1,3 +1,4 @@
+import { UUID } from "node:crypto"
 import { ActivityReminderNoteParams } from "./messages/activity-reminder-note.dto"
 import { MessageReceivedNoteParams } from "./messages/message-received-note.dto"
 import { WelcomeNoteParams } from "./messages/welcome-note.dto"
@@ -26,6 +27,8 @@ export type NotificationDestination =
   FirebaseDestination
 
 export interface Message {
+  readonly id: UUID;
+  readonly type: string;
   readonly title: string;
   readonly body: string;
   readonly apnsExpiry: number;
@@ -33,7 +36,7 @@ export interface Message {
 }
 
 export interface IMessagingService {
-  sendMessage(dest: NotificationDestination, message: Message): Promise<void>
+  sendMessage(dest: NotificationDestination, message: Message): Promise<MessageDispatchResult>
 }
 
 export interface IDispatcherService {
@@ -41,4 +44,10 @@ export interface IDispatcherService {
   sendWelcomeNote(dest: NotificationDestination, params: WelcomeNoteParams): Promise<void>
   sendActivityReminderNote(dest: NotificationDestination, params: ActivityReminderNoteParams): Promise<void>
   sendMessageReceivedNote(dest: NotificationDestination, params: MessageReceivedNoteParams): Promise<void>
+}
+
+export interface MessageDispatchResult {
+  messageId: string;
+  vendorMessageId: string | undefined;
+  successful: boolean
 }
