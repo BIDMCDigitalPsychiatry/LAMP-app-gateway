@@ -43,7 +43,8 @@ export class FirebaseMessagingService implements IMessagingService {
         successful: true
       }
     } catch(err) {
-      this.logger.error(`Sending ${message.type}(${message.id}) failed`, err)
+      this.logger.error(`Sending ${message.type}(${message.id}) failed`)
+      this.logger.error(err)
       return {
         messageId: message.id,
         vendorMessageId: undefined,

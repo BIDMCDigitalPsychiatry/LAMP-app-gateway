@@ -46,7 +46,7 @@ export class ApplePushNotificationService implements IMessagingService {
 
     this.logger.log(`Sending ${message.type}(${message.id}) via APNs`)
     const result = await this.connection.send(this.toApnsNotification(message), token);
-    
+
     if (result.failed.length > 0) {
       result.failed.forEach((fail) => {
         this.logger.log(`Sending ${message.type}(${message.id}). Code: ${fail.status} Reason: '${fail.response?.reason}'`)
