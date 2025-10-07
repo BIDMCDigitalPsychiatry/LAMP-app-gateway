@@ -49,7 +49,7 @@ export class ApplePushNotificationService implements IMessagingService {
 
     if (result.failed.length > 0) {
       result.failed.forEach((fail) => {
-        this.logger.log(`Sending ${message.type}(${message.id}). Code: ${fail.status} Reason: '${fail.response?.reason}'`)
+        this.logger.log(`Failed to send ${message.type}(${message.id}). Code: ${fail.status} Reason: '${fail.response?.reason}'`)
       })
       return {
         messageId: message.id,
@@ -57,6 +57,9 @@ export class ApplePushNotificationService implements IMessagingService {
         successful: false
       }
     } else {
+      result.sent.forEach((sent) => {
+        this.logger.log(`Successfully sent ${message.type}(${message.id}) Result: ${JSON.stringify(sent)}.`)
+      })
       return {
         messageId: message.id,
         vendorMessageId: message.id,
