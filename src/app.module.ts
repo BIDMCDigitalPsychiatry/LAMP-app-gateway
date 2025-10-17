@@ -12,6 +12,8 @@ import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'node:crypto';
 
+import awsSesConfig from './modules/notifications/config/aws-ses.config';
+import awsSmsConfig from './modules/notifications/config/aws-sms.config';
 
 @Module({
   imports: [
@@ -27,7 +29,9 @@ import { randomUUID } from 'node:crypto';
       load: [
         apnsConfig,
         configuration,
-        firebaseConfig
+        firebaseConfig,
+        awsSmsConfig,
+        awsSesConfig
       ],
       validationSchema: schema,
       validationOptions: {

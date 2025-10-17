@@ -6,6 +6,9 @@ import { WelcomeNote, WelcomeNoteParams } from './messages/welcome-note.dto';
 import { ActivityReminderNote, ActivityReminderNoteParams } from './messages/activity-reminder-note.dto';
 import { MessageReceivedNote, MessageReceivedNoteParams } from './messages/message-received-note.dto';
 import { DemoNote } from './messages/demo-note.dto';
+import { OneTimePasswordNote, OneTimePasswordNoteParams } from './messages/one-time-password-note.dto';
+import { AwsEndUserMessagingService } from './providers/aws-end-user-messaging.service';
+import { AwsSesService } from './providers/aws-ses.service';
 
 @Injectable()
 export class DispatcherService implements IDispatcherService {
@@ -15,10 +18,14 @@ export class DispatcherService implements IDispatcherService {
   constructor(
     private readonly firebaseService: FirebaseMessagingService,
     private readonly apnsService: ApplePushNotificationService,
+    private readonly smsService: AwsEndUserMessagingService,
+    private readonly emailService: AwsSesService
   ) {
     this.destinations = {
       "apns": apnsService,
-      "firebase": firebaseService
+      "firebase": firebaseService,
+      "sms": smsService,
+      "email": emailService
     }
   }
 
@@ -39,8 +46,15 @@ export class DispatcherService implements IDispatcherService {
     await this.destinations[dest.service].sendMessage(dest, msg)
     return
   }
+
   async sendMessageReceivedNote(dest: NotificationDestination, params: MessageReceivedNoteParams): Promise<void> {
     const msg = new MessageReceivedNote(params)
+    await this.destinations[dest.service].sendMessage(dest, msg)
+    return
+  }
+
+  async sendOneTimePasswordNote(dest: NotificationDestination, params: OneTimePasswordNoteParams): Promise<void> {
+    const msg = new OneTimePasswordNote(params)
     await this.destinations[dest.service].sendMessage(dest, msg)
     return
   }

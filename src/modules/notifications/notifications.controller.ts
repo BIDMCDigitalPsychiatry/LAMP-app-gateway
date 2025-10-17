@@ -1,5 +1,5 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { SendActivityReminderNotePayload, SendMessageReceivedNotePayload, SendWelcomeNotePayload } from './schemas/notification-controller-requests';
+import { SendActivityReminderNotePayload, SendMessageReceivedNotePayload, SendOneTimePasswordNotePayload, SendWelcomeNotePayload } from './schemas/notification-controller-requests';
 import { invariant } from '../../utils/invariant';
 import { DispatcherService } from './dispatcher.service';
 import { EnvRequirementGuard } from '../../guards/env-requirement.guard';
@@ -60,6 +60,12 @@ export class NotificationsController {
   @Post('/generic/new-message')
   async sendMessageReceivedNote(@Body() payload: SendMessageReceivedNotePayload): Promise<string> {
     await this.dispatcher.sendMessageReceivedNote(payload.destination, payload.options || {})
+    return "ok"
+  }
+
+  @Post('/generic/one-time-password')
+  async sendOneTimePasswordNote(@Body() payload: SendOneTimePasswordNotePayload): Promise<string> {
+    await this.dispatcher.sendOneTimePasswordNote(payload.destination, payload.options || {})
     return "ok"
   }
 }
