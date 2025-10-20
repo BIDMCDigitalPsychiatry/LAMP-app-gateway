@@ -26,8 +26,9 @@ export class FirebaseMessagingService implements IMessagingService {
     this.messaging = getMessaging(app);
   }
 
-  async sendMessage({ service, token }: NotificationDestination, message: Message): Promise<MessageDispatchResult> {
-    invariant(service === "firebase", `Message intended for '${service}' delivery, not Firebase`)
+  async sendMessage(dest: NotificationDestination, message: Message): Promise<MessageDispatchResult> {
+    invariant(dest.service === "firebase", `Message intended for '${dest.service}' delivery, not Firebase`)
+    const { service, token } = dest
 
     const tokenMessage : TokenMessage = {
       token,

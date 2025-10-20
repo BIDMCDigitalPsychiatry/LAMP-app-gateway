@@ -41,8 +41,9 @@ export class ApplePushNotificationService implements IMessagingService {
     this.connection = new apn.Provider(options);
   }
 
-  async sendMessage({ service, token }: NotificationDestination, message: Message): Promise<MessageDispatchResult> {
-    invariant(service === "apns", `Message intended for '${service}' delivery, not APNs`)
+  async sendMessage(dest: NotificationDestination, message: Message): Promise<MessageDispatchResult> {
+    invariant(dest.service === "apns", `Message intended for '${dest.service}' delivery, not APNs`)
+    const { service, token } = dest
 
     this.logger.log(`Sending ${message.type}(${message.id}) via APNs`)
     const result = await this.connection.send(this.toApnsNotification(message), token);
