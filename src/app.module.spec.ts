@@ -4,8 +4,10 @@ import { AppModule } from './app.module';
 import { FirebaseMessagingService } from './modules/notifications/providers/firebase-messaging.service';
 import { ApplePushNotificationService } from './modules/notifications/providers/apple-push-notification.service';
 import { SystemController } from './modules/system/system.controller';
-import { NotificationsController } from './modules/notifications/notifications.controller';
 import { TestUtils } from './test/test-utils';
+import { DemoNotificationsController } from './modules/notifications/controllers/demo-notifications.controller';
+import { GenericPushNotificationsController } from './modules/notifications/controllers/generic-push-notifications.controller';
+import { OneTimePasswordsController } from './modules/notifications/controllers/one-time-passwords.controller';
 
 describe('AppModule', () => {
   let module: TestingModule;
@@ -69,9 +71,19 @@ describe('AppModule', () => {
       expect(systemController).toBeDefined();
     });
 
-    it('should have NotificationsController available', () => {
-      const notificationsController = module.get(NotificationsController);
-      expect(notificationsController).toBeDefined();
+    it('should have DemoNotificationsController available', () => {
+      const demoNotificationsController = module.get(DemoNotificationsController);
+      expect(demoNotificationsController).toBeDefined();
+    });
+
+    it('should have GenericPushNotificationsController available', () => {
+      const genericPushNotificationsController = module.get(GenericPushNotificationsController);
+      expect(genericPushNotificationsController).toBeDefined();
+    });
+
+    it('should have OneTimePasswordsController available', () => {
+      const oneTimePasswordsController = module.get(OneTimePasswordsController);
+      expect(oneTimePasswordsController).toBeDefined();
     });
 
     it('should have mocked FirebaseMessagingService available', () => {
@@ -89,15 +101,14 @@ describe('AppModule', () => {
 
   describe('Module integration', () => {
     it('should allow controllers to access their dependencies', () => {
-      const systemController = module.get(SystemController);
-      const notificationsController = module.get(NotificationsController);
-      
       // Test that controllers exist and can be called
+      const systemController = module.get(SystemController);
       expect(() => systemController.healthz()).not.toThrow();
       expect(systemController.healthz()).toEqual({ ok: true });
       
-      // NotificationsController should have access to mocked services
-      expect(notificationsController).toBeDefined();
+      // GenericPushNotificationsController should have access to mocked services
+      const genericPushNotificationsController = module.get(GenericPushNotificationsController);
+      expect(genericPushNotificationsController).toBeDefined();
     });
 
     it('should have properly initialized all modules', () => {
@@ -107,7 +118,9 @@ describe('AppModule', () => {
       // Check that we can retrieve key components without errors
       expect(() => module.get(ConfigService)).not.toThrow();
       expect(() => module.get(SystemController)).not.toThrow();
-      expect(() => module.get(NotificationsController)).not.toThrow();
+      expect(() => module.get(DemoNotificationsController)).not.toThrow();
+      expect(() => module.get(GenericPushNotificationsController)).not.toThrow();
+      expect(() => module.get(OneTimePasswordsController)).not.toThrow();
     });
   });
 });
