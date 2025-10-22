@@ -12,27 +12,6 @@ import { OneTimePasswordsController } from './modules/notifications/controllers/
 describe('AppModule', () => {
   let module: TestingModule;
 
-  beforeAll(() => {
-    // Set required environment variables
-    process.env.API_KEYS = 'testkey123456,anothertestkey123';
-    process.env.APNS_KEY_FILE_BASE64 = Buffer.from('test-key').toString('base64');
-    process.env.APNS_KEY_ID = 'test-key-id';
-    process.env.APNS_TEAM_ID = 'test-team-id';
-    process.env.APNS_BUNDLE_ID = 'test.bundle.id';
-    process.env.APNS_USE_PRODUCTION_ENDPOINT = 'false';
-    process.env.FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 = Buffer.from(JSON.stringify({
-      type: 'service_account',
-      project_id: 'test-project',
-      private_key_id: 'test-key-id',
-      private_key: '-----BEGIN PRIVATE KEY-----\ntest-key\n-----END PRIVATE KEY-----\n',
-      client_email: 'test@test-project.iam.gserviceaccount.com',
-      client_id: '12345',
-      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-      token_uri: 'https://oauth2.googleapis.com/token',
-      auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs'
-    })).toString('base64');
-  });
-
   beforeEach(async () => {
     module = await Test.createTestingModule({
       imports: [AppModule],

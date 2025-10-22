@@ -9,6 +9,7 @@ interface NotificationDestinationBase {
   service: ServiceKey
 }
 
+export type PhoneNumber = string
 type ApnsToken = string
 type FirebaseToken = string
 

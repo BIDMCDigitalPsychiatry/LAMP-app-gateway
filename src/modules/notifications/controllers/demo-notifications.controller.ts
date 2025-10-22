@@ -2,6 +2,8 @@ import { Controller, Post, UseGuards } from '@nestjs/common';
 import { EnvRequirementGuard } from '../../../guards/env-requirement.guard';
 import { invariant } from '../../../utils/invariant';
 import { DispatcherService } from '../dispatcher.service';
+import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../providers/aws-end-user-messaging.service';
+import { DemoNote } from '../messages/demo-note.dto';
 
 @Controller('demo')
 export class DemoNotificationsController {
@@ -11,10 +13,10 @@ export class DemoNotificationsController {
 
   constructor(
     private readonly dispatcher: DispatcherService,
+    private readonly smsService: AwsEndUserMessagingService,
   ) {
     this.demoDeviceIdAndroid = process.env.DEMO_DEVICE_ID_ANDROID || null;
     this.demoDeviceIdIos = process.env.DEMO_DEVICE_ID_IOS || null;
-    this.dispatcher = dispatcher;
   }
 
   @Post('/test-apns')
@@ -39,6 +41,13 @@ export class DemoNotificationsController {
       service: "firebase",
       token: this.demoDeviceIdAndroid
     })
+
+    return "ok";
+  }
+
+  @Post('/test-sms')
+  async sendDemoSmsNote(): Promise<string> {
+    await this.smsService.sendMessage(SIMULATOR_PHONE_NUMBERS.US.SUCCESS, new DemoNote())
 
     return "ok";
   }

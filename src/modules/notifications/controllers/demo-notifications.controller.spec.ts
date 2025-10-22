@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DemoNotificationsController } from './demo-notifications.controller';
 import { DispatcherService } from '../dispatcher.service';
+import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../providers/aws-end-user-messaging.service';
+import { DemoNote } from '../messages/demo-note.dto';
 
 describe('DemoNotificationsController', () => {
   let controller: DemoNotificationsController;
@@ -12,6 +14,10 @@ describe('DemoNotificationsController', () => {
     sendMessageReceivedNote: jest.fn(),
   };
 
+  const mockSmsService = {
+    sendMessage: jest.fn()
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DemoNotificationsController],
@@ -20,6 +26,10 @@ describe('DemoNotificationsController', () => {
           provide: DispatcherService,
           useValue: mockDispatcherService,
         },
+        {
+          provide: AwsEndUserMessagingService,
+          useValue: mockSmsService
+        }
       ],
     }).compile();
 
@@ -46,6 +56,7 @@ describe('DemoNotificationsController', () => {
         controllers: [DemoNotificationsController],
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
+          { provide: AwsEndUserMessagingService, useValue: mockSmsService },
         ],
       }).compile();
       
@@ -74,6 +85,7 @@ describe('DemoNotificationsController', () => {
         controllers: [DemoNotificationsController],
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
+          { provide: AwsEndUserMessagingService, useValue: mockSmsService },
         ],
       }).compile();
       
@@ -99,6 +111,7 @@ describe('DemoNotificationsController', () => {
         controllers: [DemoNotificationsController],
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
+          { provide: AwsEndUserMessagingService, useValue: mockSmsService },
         ],
       }).compile();
       
@@ -127,6 +140,7 @@ describe('DemoNotificationsController', () => {
         controllers: [DemoNotificationsController],
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
+          { provide: AwsEndUserMessagingService, useValue: mockSmsService },
         ],
       }).compile();
       
@@ -139,6 +153,20 @@ describe('DemoNotificationsController', () => {
       expect(mockDispatcherService.sendDemoNote).not.toHaveBeenCalled();
 
       process.env = originalEnv;
+    });
+  });
+
+  describe('sendDemoSmsNote', () => {
+    it('should send SMS to simulator phone number with DemoNote', async () => {
+      mockSmsService.sendMessage.mockResolvedValue(null);
+
+      const result = await controller.sendDemoSmsNote();
+
+      expect(mockSmsService.sendMessage).toHaveBeenCalledWith(
+        SIMULATOR_PHONE_NUMBERS.US.SUCCESS,
+        expect.any(DemoNote)
+      );
+      expect(result).toBe('ok');
     });
   });
 });
