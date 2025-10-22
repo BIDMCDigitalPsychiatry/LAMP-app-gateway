@@ -110,3 +110,5 @@ dist
 .DS_Store
 
 .claude/
+
+Makefile

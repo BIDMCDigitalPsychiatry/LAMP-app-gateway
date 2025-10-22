@@ -123,6 +123,14 @@ export class TestUtils {
       sendDemoNotification: jest.fn().mockResolvedValue(null),
     },
 
+    awsSmsService: {
+      sendMessage: jest.fn().mockResolvedValue({
+        messageId: expect.any(String),
+        vendorMessageId: 'aws-message-id-123',
+        successful: true,
+      }),
+    },
+
     configService: TestUtils.createMockConfigService(),
   };
 

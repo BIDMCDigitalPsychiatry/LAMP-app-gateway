@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { TestUtils } from '../src/test/test-utils';
 import { FirebaseMessagingService } from '../src/modules/notifications/providers/firebase-messaging.service';
 import { ApplePushNotificationService } from '../src/modules/notifications/providers/apple-push-notification.service';
+import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../src/modules/notifications/providers/aws-end-user-messaging.service';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -13,7 +14,7 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     testApiKey = TestUtils.getTestApiKey();
-    
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -23,10 +24,12 @@ describe('AppController (e2e)', () => {
       .useValue(TestUtils.mocks.firebaseService)
       .overrideProvider(ApplePushNotificationService)
       .useValue(TestUtils.mocks.apnsService)
+      .overrideProvider(AwsEndUserMessagingService)
+      .useValue(TestUtils.mocks.awsSmsService)
       .compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     await app.init();
   });
 
@@ -152,6 +155,8 @@ describe('AppController (e2e)', () => {
         .useValue(TestUtils.mocks.firebaseService)
         .overrideProvider(ApplePushNotificationService)
         .useValue(TestUtils.mocks.apnsService)
+        .overrideProvider(AwsEndUserMessagingService)
+        .useValue(TestUtils.mocks.awsSmsService)
         .compile();
 
       notifApp = moduleFixture.createNestApplication();
@@ -178,6 +183,12 @@ describe('AppController (e2e)', () => {
       it('/demo/test-firebase (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
           .post('/demo/test-firebase')
+          .expect(403);
+      });
+
+      it('/demo/test-sms (POST) should require authentication', () => {
+        return request(notifApp.getHttpServer())
+          .post('/demo/test-sms')
           .expect(403);
       });
     });
@@ -210,12 +221,14 @@ describe('AppController (e2e)', () => {
       let integrationApp: INestApplication;
       let mockApnsService: any;
       let mockFirebaseService: any;
-      
+      let mockSmsService: any;
+
       beforeAll(async () => {
         // Reset mocks before starting
         TestUtils.resetMocks();
         mockApnsService = TestUtils.mocks.apnsService;
         mockFirebaseService = TestUtils.mocks.firebaseService;
+        mockSmsService = TestUtils.mocks.awsSmsService;
         
         // Set up env vars for working tests
         process.env.DEMO_DEVICE_ID_IOS = 'test-ios-device-token';
@@ -230,6 +243,8 @@ describe('AppController (e2e)', () => {
           .useValue(mockFirebaseService)
           .overrideProvider(ApplePushNotificationService)
           .useValue(mockApnsService)
+          .overrideProvider(AwsEndUserMessagingService)
+          .useValue(TestUtils.mocks.awsSmsService)
           .compile();
 
         integrationApp = moduleFixture.createNestApplication();
@@ -249,6 +264,7 @@ describe('AppController (e2e)', () => {
         // Reset mocks before each test
         mockApnsService.sendMessage.mockClear();
         mockFirebaseService.sendMessage.mockClear();
+        mockSmsService.sendMessage.mockClear();
       });
 
       describe('APNS Integration', () => {
@@ -364,7 +380,7 @@ describe('AppController (e2e)', () => {
               body: expect.any(String)
             })
           );
-          
+
           // Verify APNS service was NOT called
           expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
         });
@@ -390,9 +406,33 @@ describe('AppController (e2e)', () => {
               body: 'Welcome to LAMP'
             })
           );
-          
+
           // Verify APNS was NOT called
           expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('SMS Integration', () => {
+        it('POST /demo/test-sms should make HTTP request and call AWS SMS service with simulator phone number', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/demo/test-sms')
+            .set(TestUtils.createAuthHeader())
+            .expect(201)
+            .expect('ok');
+
+          // Verify AWS SMS service sendMessage was called with the correct arguments
+          expect(mockSmsService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockSmsService.sendMessage).toHaveBeenCalledWith(
+            SIMULATOR_PHONE_NUMBERS.US.SUCCESS,
+            expect.objectContaining({
+              title: expect.any(String),
+              body: expect.any(String)
+            })
+          );
+
+          // Verify APNS and Firebase services were NOT called
+          expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
+          expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
         });
       });
 

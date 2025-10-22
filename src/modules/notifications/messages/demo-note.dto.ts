@@ -6,7 +6,7 @@ import { ApnsPriority } from "../providers/apple-push-notification.service";
 export class DemoNote implements Message {
 
   constructor() {
-    this.title = "Hi Matt it's Will"
+    this.title = "Message Title"
     this.body = "Demo message body content"
     this.apnsPriority = ApnsPriority.SEND_IMMEDIATELY
     this.apnsExpiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.

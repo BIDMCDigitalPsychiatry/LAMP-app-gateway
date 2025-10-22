@@ -5,6 +5,7 @@ import { DispatcherService } from './dispatcher.service';
 import { DemoNotificationsController } from './controllers/demo-notifications.controller';
 import { GenericPushNotificationsController } from './controllers/generic-push-notifications.controller';
 import { OneTimePasswordsController } from './controllers/one-time-passwords.controller';
+import { AwsEndUserMessagingService } from './providers/aws-end-user-messaging.service';
 
 @Module({
   imports: [],
@@ -12,7 +13,8 @@ import { OneTimePasswordsController } from './controllers/one-time-passwords.con
   providers: [
     FirebaseMessagingService,
     ApplePushNotificationService,
-    DispatcherService
+    DispatcherService,
+    AwsEndUserMessagingService
   ],
   exports: [
   ],

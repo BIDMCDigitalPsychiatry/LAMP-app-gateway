@@ -62,6 +62,21 @@ export const schema = Joi.object({
     'any.only': 'APNS_USE_PRODUCTION_ENDPOINT must be either "true" or "false"'
   }),
 
+  AWS_SMS_CONFIG_SET_NAME: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
+    'any.required': 'AWS_SMS_CONFIG_SET_NAME environment variable is required',
+    'string.pattern.base': 'AWS_SMS_CONFIG_SET_NAME must be a end-user messaging configuration set name (e.g., lemp-dev-cloudwatch)'
+  }),
+
+  AWS_SMS_ORIGINATION_IDENTITY: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
+    'any.required': 'AWS_SMS_ORIGINATION_IDENTITY environment variable is required',
+    'string.pattern.base': 'AWS_SMS_ORIGINATION_IDENTITY must be a valid aws end user messaging phone pool id (e.g., pool-4696666666666666666666666666)'
+  }),
+
+  AWS_SMS_REGION: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
+    'any.required': 'AWS_SMS_REGION environment variable is required',
+    'string.pattern.base': 'AWS_SMS_REGION must be a valid aws region (e.g., us-east-2)'
+  }),
+
   // Firebase configuration
   FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: Joi.string().required().base64().messages({
     'any.required': 'FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 environment variable is required',
