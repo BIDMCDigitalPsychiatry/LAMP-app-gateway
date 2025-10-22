@@ -169,23 +169,23 @@ describe('AppController (e2e)', () => {
     });
 
     describe('Authentication tests', () => {
-      it('/test-apns (POST) should require authentication', () => {
+      it('/demo/test-apns (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
-          .post('/test-apns')
+          .post('/demo/test-apns')
           .expect(403);
       });
 
-      it('/test-firebase (POST) should require authentication', () => {
+      it('/demo/test-firebase (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
-          .post('/test-firebase')
+          .post('/demo/test-firebase')
           .expect(403);
       });
     });
 
     describe('With authentication', () => {
-      it('/test-apns (POST) should return 403 when device ID not configured', () => {
+      it('/demo/test-apns (POST) should return 403 when device ID not configured', () => {
         return request(notifApp.getHttpServer())
-          .post('/test-apns')
+          .post('/demo/test-apns')
           .set(TestUtils.createAuthHeader())
           .expect(403)
           .expect((res: any) => {
@@ -194,9 +194,9 @@ describe('AppController (e2e)', () => {
           });
       });
 
-      it('/test-firebase (POST) should return 403 when device ID not configured', () => {
+      it('/demo/test-firebase (POST) should return 403 when device ID not configured', () => {
         return request(notifApp.getHttpServer())
-          .post('/test-firebase')
+          .post('/demo/test-firebase')
           .set(TestUtils.createAuthHeader())
           .expect(403)
           .expect((res: any) => {
@@ -252,9 +252,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('APNS Integration', () => {
-        it('POST /test-apns should make HTTP request and call APNS service with correct device token', async () => {
+        it('POST /demo/test-apns should make HTTP request and call APNS service with correct device token', async () => {
           const response = await request(integrationApp.getHttpServer())
-            .post('/test-apns')
+            .post('/demo/test-apns')
             .set(TestUtils.createAuthHeader())
             .expect(201)
             .expect('ok');
@@ -348,9 +348,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('Firebase Integration', () => {
-        it('POST /test-firebase should make HTTP request and call Firebase service with correct device token', async () => {
+        it('POST /demo/test-firebase should make HTTP request and call Firebase service with correct device token', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/test-firebase')
+            .post('/demo/test-firebase')
             .set(TestUtils.createAuthHeader())
             .expect(201)
             .expect('ok');
