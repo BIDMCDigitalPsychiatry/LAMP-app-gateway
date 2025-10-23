@@ -1,25 +1,18 @@
-import { randomUUID, UUID } from "node:crypto";
 import { Message } from "../domain";
 import { ApnsPriority } from "../providers/apple-push-notification.service";
+import { BaseMessage } from "./base-message";
 
 export interface ActivityReminderNoteParams {}
 
-export class ActivityReminderNote implements Message {
-
+export class ActivityReminderNote extends BaseMessage implements Message {
   constructor(_: ActivityReminderNoteParams) {
-    this.title = "Activity waiting"
-    this.body = "You have an activity awaiting completion"
-    this.apnsExpiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-    this.apnsPriority = ApnsPriority.RESPECT_BATTERY_STATE;
-    this.id = randomUUID()
-    this.type = ActivityReminderNote.name
+    super({
+      title: "Activity waiting",
+      body: "You have an activity awaiting completion",
+      expiresAt: Math.floor(Date.now() / 1000) + 3600 // Expires 1 hour from now.
+    })
+    this.opts.apns = {
+      priority: ApnsPriority.RESPECT_BATTERY_STATE
+    }
   }
-
-  readonly type: string;
-  readonly id: UUID;
-  readonly title: string;
-  readonly body: string;
-  readonly apnsExpiry: number;
-  readonly apnsPriority: ApnsPriority;
-
 }

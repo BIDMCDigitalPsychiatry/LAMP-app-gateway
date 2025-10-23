@@ -17,6 +17,10 @@ export interface ApnsConfig {
   isProduction: boolean
 }
 
+export interface ApnsOptions {
+  priority: ApnsPriority
+}
+
 @Injectable()
 export class ApplePushNotificationService implements IMessagingService {
   private readonly connection: Provider;
@@ -76,11 +80,14 @@ export class ApplePushNotificationService implements IMessagingService {
       topic: this.topic,
       title: msg.title,
       body: msg.body,
-      expiry: msg.apnsExpiry || 0
+      expiry: msg.expiresAt || 0,
+      priority: (!! msg.opts.apns?.priority) ? msg.opts.apns?.priority : ApnsPriority.SEND_IMMEDIATELY
     })
   }
 }
 
+// See APNs Documentation re: apns-priority header
+// https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns
 export enum ApnsPriority {
   SEND_IMMEDIATELY = 10,
   RESPECT_BATTERY_STATE = 5,

@@ -1,25 +1,24 @@
-import { randomUUID, UUID } from "node:crypto";
 import { Message } from "../domain";
 import { ApnsPriority } from "../providers/apple-push-notification.service";
+import { BaseMessage } from "./base-message";
 
+function getCurrentDatetimeString(): string {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    dateStyle: 'full',
+    timeStyle: 'medium'
+  })
+  return formatter.format(Date.now())
+}
 
-export class DemoNote implements Message {
-
+export class DemoNote extends BaseMessage implements Message {
   constructor() {
-    this.title = "Message Title"
-    this.body = "Demo message body content"
-    this.apnsPriority = ApnsPriority.SEND_IMMEDIATELY
-    this.apnsExpiry = Math.floor(Date.now() / 1000) + 3600; // Expires 1 hour from now.
-    this.id = randomUUID()
-    this.type = DemoNote.name
+    super({
+      title: "Message Title",
+      body: "Demo message body content",
+      expiresAt: Math.floor(Date.now() / 1000) + 3600 // Expires 1 hour from now.
+    })
+    this.opts.apns = {
+      priority: ApnsPriority.SEND_IMMEDIATELY
+    }
   }
-
-  readonly id: UUID;
-  readonly type: string;
-  readonly apnsExpiry: number;
-  readonly apnsPriority: ApnsPriority;
-
-  readonly title: string;
-  readonly body: string;
-
 }
