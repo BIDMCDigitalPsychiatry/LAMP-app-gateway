@@ -41,6 +41,7 @@ import { randomUUID } from 'node:crypto';
       },
     }),
     LoggerModule.forRoot({
+      assignResponse: true,
       pinoHttp: {
         base: undefined, // to disable pid & hostname
         quietReqLogger: true,
