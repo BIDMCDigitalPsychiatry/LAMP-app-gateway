@@ -7,6 +7,7 @@ import { TestUtils } from '../src/test/test-utils';
 import { FirebaseMessagingService } from '../src/modules/notifications/providers/firebase-messaging.service';
 import { ApplePushNotificationService } from '../src/modules/notifications/providers/apple-push-notification.service';
 import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../src/modules/notifications/providers/aws-end-user-messaging.service';
+import { AwsEmailService } from '../src/modules/notifications/providers/aws-email.service';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -26,6 +27,8 @@ describe('AppController (e2e)', () => {
       .useValue(TestUtils.mocks.apnsService)
       .overrideProvider(AwsEndUserMessagingService)
       .useValue(TestUtils.mocks.awsSmsService)
+      .overrideProvider(AwsEmailService)
+      .useValue(TestUtils.mocks.awsEmailService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -142,8 +145,10 @@ describe('AppController (e2e)', () => {
       // Ensure env vars are not set for these tests
       const originalIOS = process.env.DEMO_DEVICE_ID_IOS;
       const originalAndroid = process.env.DEMO_DEVICE_ID_ANDROID;
+      const originalEmail = process.env.DEMO_EMAIL_ADDR;
       delete process.env.DEMO_DEVICE_ID_IOS;
       delete process.env.DEMO_DEVICE_ID_ANDROID;
+      delete process.env.DEMO_EMAIL_ADDR;
 
       // Create a fresh app without the env vars
       const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -157,6 +162,8 @@ describe('AppController (e2e)', () => {
         .useValue(TestUtils.mocks.apnsService)
         .overrideProvider(AwsEndUserMessagingService)
         .useValue(TestUtils.mocks.awsSmsService)
+        .overrideProvider(AwsEmailService)
+        .useValue(TestUtils.mocks.awsEmailService)
         .compile();
 
       notifApp = moduleFixture.createNestApplication();
@@ -165,6 +172,7 @@ describe('AppController (e2e)', () => {
       // Restore env vars after app creation
       if (originalIOS) process.env.DEMO_DEVICE_ID_IOS = originalIOS;
       if (originalAndroid) process.env.DEMO_DEVICE_ID_ANDROID = originalAndroid;
+      if (originalEmail) process.env.DEMO_EMAIL_ADDR = originalEmail;
     });
 
     afterAll(async () => {
@@ -191,6 +199,12 @@ describe('AppController (e2e)', () => {
           .post('/demo/test-sms')
           .expect(403);
       });
+
+      it('/demo/test-email (POST) should require authentication', () => {
+        return request(notifApp.getHttpServer())
+          .post('/demo/test-email')
+          .expect(403);
+      });
     });
 
     describe('With authentication', () => {
@@ -215,6 +229,17 @@ describe('AppController (e2e)', () => {
             expect(res.body).toHaveProperty('message', 'Forbidden resource');
           });
       });
+
+      it('/demo/test-email (POST) should return 403 when email address not configured', () => {
+        return request(notifApp.getHttpServer())
+          .post('/demo/test-email')
+          .set(TestUtils.createAuthHeader())
+          .expect(403)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 403);
+            expect(res.body).toHaveProperty('message', 'Forbidden resource');
+          });
+      });
     });
 
     describe('Integration tests with working device IDs', () => {
@@ -222,6 +247,7 @@ describe('AppController (e2e)', () => {
       let mockApnsService: any;
       let mockFirebaseService: any;
       let mockSmsService: any;
+      let mockEmailService: any;
 
       beforeAll(async () => {
         // Reset mocks before starting
@@ -229,10 +255,12 @@ describe('AppController (e2e)', () => {
         mockApnsService = TestUtils.mocks.apnsService;
         mockFirebaseService = TestUtils.mocks.firebaseService;
         mockSmsService = TestUtils.mocks.awsSmsService;
+        mockEmailService = TestUtils.mocks.awsEmailService;
         
         // Set up env vars for working tests
         process.env.DEMO_DEVICE_ID_IOS = 'test-ios-device-token';
         process.env.DEMO_DEVICE_ID_ANDROID = 'test-android-device-token';
+        process.env.DEMO_EMAIL_ADDR = 'test@example.com';
 
         const moduleFixture: TestingModule = await Test.createTestingModule({
           imports: [AppModule],
@@ -245,6 +273,8 @@ describe('AppController (e2e)', () => {
           .useValue(mockApnsService)
           .overrideProvider(AwsEndUserMessagingService)
           .useValue(TestUtils.mocks.awsSmsService)
+          .overrideProvider(AwsEmailService)
+          .useValue(mockEmailService)
           .compile();
 
         integrationApp = moduleFixture.createNestApplication();
@@ -258,6 +288,7 @@ describe('AppController (e2e)', () => {
         // Clean up env vars
         delete process.env.DEMO_DEVICE_ID_IOS;
         delete process.env.DEMO_DEVICE_ID_ANDROID;
+        delete process.env.DEMO_EMAIL_ADDR;
       });
 
       beforeEach(() => {
@@ -265,6 +296,7 @@ describe('AppController (e2e)', () => {
         mockApnsService.sendMessage.mockClear();
         mockFirebaseService.sendMessage.mockClear();
         mockSmsService.sendMessage.mockClear();
+        mockEmailService.sendMessage.mockClear();
       });
 
       describe('APNS Integration', () => {
@@ -433,6 +465,31 @@ describe('AppController (e2e)', () => {
           // Verify APNS and Firebase services were NOT called
           expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
           expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
+        });
+      });
+
+      describe('Email Integration', () => {
+        it('POST /demo/test-email should make HTTP request and call AWS Email service with demo email address', async () => {
+          await request(integrationApp.getHttpServer())
+            .post('/demo/test-email')
+            .set(TestUtils.createAuthHeader())
+            .expect(201)
+            .expect('ok');
+
+          // Verify AWS Email service sendMessage was called with the correct arguments
+          expect(mockEmailService.sendMessage).toHaveBeenCalledTimes(1);
+          expect(mockEmailService.sendMessage).toHaveBeenCalledWith(
+            'test@example.com',
+            expect.objectContaining({
+              title: expect.any(String),
+              body: expect.any(String)
+            })
+          );
+
+          // Verify APNS, Firebase, and SMS services were NOT called
+          expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
+          expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
+          expect(mockSmsService.sendMessage).not.toHaveBeenCalled();
         });
       });
 

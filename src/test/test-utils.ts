@@ -131,6 +131,14 @@ export class TestUtils {
       }),
     },
 
+    awsEmailService: {
+      sendMessage: jest.fn().mockResolvedValue({
+        messageId: expect.any(String),
+        vendorMessageId: 'ses-message-id-123',
+        successful: true,
+      }),
+    },
+
     configService: TestUtils.createMockConfigService(),
   };
 

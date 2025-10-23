@@ -20,5 +20,12 @@ export class DemoNote extends BaseMessage implements Message {
     this.opts.apns = {
       priority: ApnsPriority.SEND_IMMEDIATELY
     }
+    this.opts.ses = {
+      templateName: "DEMO_EMAIL",
+      templateData: {
+        name: "Demo User",
+        date: getCurrentDatetimeString()
+      }
+    }
   }
 }

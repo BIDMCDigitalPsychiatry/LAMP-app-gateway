@@ -61,6 +61,15 @@ export const schema = Joi.object({
   APNS_USE_PRODUCTION_ENDPOINT: Joi.string().valid('true', 'false').default('false').messages({
     'any.only': 'APNS_USE_PRODUCTION_ENDPOINT must be either "true" or "false"'
   }),
+ 
+  AWS_SES_REGION: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
+    'any.required': 'AWS_SES_REGION environment variable is required',
+    'string.pattern.base': 'AWS_SES_REGION must be a valid aws region (e.g., us-east-2)'
+  }),
+
+  AWS_SES_EMAIL_ADDR_REPLY_TO: Joi.string().required().email(),
+
+  AWS_SES_EMAIL_ADDR_SENDER: Joi.string().required().email(),
 
   AWS_SMS_CONFIG_SET_NAME: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
     'any.required': 'AWS_SMS_CONFIG_SET_NAME environment variable is required',

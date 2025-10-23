@@ -4,19 +4,23 @@ import { invariant } from '../../../utils/invariant';
 import { DispatcherService } from '../dispatcher.service';
 import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../providers/aws-end-user-messaging.service';
 import { DemoNote } from '../messages/demo-note.dto';
+import { AwsEmailService } from '../providers/aws-email.service';
 
 @Controller('demo')
 export class DemoNotificationsController {
 
   private readonly demoDeviceIdAndroid: string | null;
   private readonly demoDeviceIdIos: string | null;
-
+  private readonly demoEmailAddr: string | null;
+  
   constructor(
     private readonly dispatcher: DispatcherService,
     private readonly smsService: AwsEndUserMessagingService,
+    private readonly emailService: AwsEmailService,
   ) {
     this.demoDeviceIdAndroid = process.env.DEMO_DEVICE_ID_ANDROID || null;
     this.demoDeviceIdIos = process.env.DEMO_DEVICE_ID_IOS || null;
+    this.demoEmailAddr = process.env.DEMO_EMAIL_ADDR || null
   }
 
   @Post('/test-apns')
@@ -48,6 +52,16 @@ export class DemoNotificationsController {
   @Post('/test-sms')
   async sendDemoSmsNote(): Promise<string> {
     await this.smsService.sendMessage(SIMULATOR_PHONE_NUMBERS.US.SUCCESS, new DemoNote())
+
+    return "ok";
+  }
+
+  @Post('/test-email')
+  @UseGuards(new EnvRequirementGuard('DEMO_EMAIL_ADDR'))
+  async sendDemoEmailNote(): Promise<string> {
+    invariant((this.demoEmailAddr !== null), "Cannot send demo notification via email if `DEMO_EMAIL_ADDR` is not set")
+
+    await this.emailService.sendMessage(this.demoEmailAddr, new DemoNote())
 
     return "ok";
   }
