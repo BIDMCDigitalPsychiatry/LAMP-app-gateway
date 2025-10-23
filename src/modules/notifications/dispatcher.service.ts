@@ -18,7 +18,7 @@ export class DispatcherService implements IDispatcherService {
   ) {
     this.destinations = {
       "apns": apnsService,
-      "firebase": firebaseService
+      "firebase": firebaseService,
     }
   }
 

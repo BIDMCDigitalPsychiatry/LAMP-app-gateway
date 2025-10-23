@@ -7,6 +7,7 @@ import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import apnsConfig from './modules/notifications/config/apns.config';
 import firebaseConfig from './modules/notifications/config/firebase.config';
 import awsSmsConfig from './modules/notifications/config/aws-sms.config';
+import awsSesConfig from './modules/notifications/config/aws-ses.config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ApiKeyGuard } from './guards/api-key.guard';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
@@ -30,6 +31,7 @@ import { randomUUID } from 'node:crypto';
         configuration,
         firebaseConfig,
         awsSmsConfig,
+        awsSesConfig,
       ],
       validationSchema: schema,
       validationOptions: {
@@ -39,6 +41,7 @@ import { randomUUID } from 'node:crypto';
       },
     }),
     LoggerModule.forRoot({
+      assignResponse: true,
       pinoHttp: {
         base: undefined, // to disable pid & hostname
         quietReqLogger: true,

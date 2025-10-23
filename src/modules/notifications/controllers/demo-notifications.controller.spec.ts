@@ -3,6 +3,7 @@ import { DemoNotificationsController } from './demo-notifications.controller';
 import { DispatcherService } from '../dispatcher.service';
 import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../providers/aws-end-user-messaging.service';
 import { DemoNote } from '../messages/demo-note.dto';
+import { AwsEmailService } from '../providers/aws-email.service';
 
 describe('DemoNotificationsController', () => {
   let controller: DemoNotificationsController;
@@ -18,6 +19,10 @@ describe('DemoNotificationsController', () => {
     sendMessage: jest.fn()
   }
 
+  const mockEmailService = {
+    sendMessage: jest.fn()
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DemoNotificationsController],
@@ -29,6 +34,10 @@ describe('DemoNotificationsController', () => {
         {
           provide: AwsEndUserMessagingService,
           useValue: mockSmsService
+        },
+        {
+          provide: AwsEmailService,
+          useValue: mockEmailService
         }
       ],
     }).compile();
@@ -57,6 +66,7 @@ describe('DemoNotificationsController', () => {
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
           { provide: AwsEndUserMessagingService, useValue: mockSmsService },
+          { provide: AwsEmailService, useValue: mockEmailService },
         ],
       }).compile();
       
@@ -86,6 +96,7 @@ describe('DemoNotificationsController', () => {
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
           { provide: AwsEndUserMessagingService, useValue: mockSmsService },
+          { provide: AwsEmailService, useValue: mockEmailService },
         ],
       }).compile();
       
@@ -112,6 +123,7 @@ describe('DemoNotificationsController', () => {
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
           { provide: AwsEndUserMessagingService, useValue: mockSmsService },
+          { provide: AwsEmailService, useValue: mockEmailService },
         ],
       }).compile();
       
@@ -141,6 +153,7 @@ describe('DemoNotificationsController', () => {
         providers: [
           { provide: DispatcherService, useValue: mockDispatcherService },
           { provide: AwsEndUserMessagingService, useValue: mockSmsService },
+          { provide: AwsEmailService, useValue: mockEmailService },
         ],
       }).compile();
       
@@ -169,4 +182,60 @@ describe('DemoNotificationsController', () => {
       expect(result).toBe('ok');
     });
   });
+
+  describe('sendDemoEmailNote', () => {
+    it('should send email when demo email addr is configured', async () => {
+      const originalEnv = process.env;
+      const demoEmailAddr = 'test123@example.com'
+      process.env = { ...originalEnv, DEMO_EMAIL_ADDR: demoEmailAddr };
+      
+      // Need to recreate controller to pick up new env var
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [DemoNotificationsController],
+        providers: [
+          { provide: DispatcherService, useValue: mockDispatcherService },
+          { provide: AwsEndUserMessagingService, useValue: mockSmsService },
+          { provide: AwsEmailService, useValue: mockEmailService },
+        ],
+      }).compile();
+      
+      const testController = module.get<DemoNotificationsController>(DemoNotificationsController);
+
+      mockEmailService.sendMessage.mockResolvedValue(null);
+
+      const result = await testController.sendDemoEmailNote();
+
+      expect(mockEmailService.sendMessage).toHaveBeenCalledWith(demoEmailAddr, expect.any(DemoNote));
+      expect(result).toBe('ok');
+
+      process.env = originalEnv;
+    });
+
+    it('should throw error when device ID is not configured', async () => {
+      const originalEnv = process.env;
+      process.env = { ...originalEnv };
+      delete process.env.DEMO_EMAIL_ADDR;
+
+      // Need to recreate controller to pick up env var change
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [DemoNotificationsController],
+        providers: [
+          { provide: DispatcherService, useValue: mockDispatcherService },
+          { provide: AwsEndUserMessagingService, useValue: mockSmsService },
+          { provide: AwsEmailService, useValue: mockEmailService },
+        ],
+      }).compile();
+      
+      const testController = module.get<DemoNotificationsController>(DemoNotificationsController);
+
+      await expect(testController.sendDemoEmailNote()).rejects.toThrow(
+        'Cannot send demo notification via email if `DEMO_EMAIL_ADDR` is not set'
+      );
+
+      expect(mockEmailService.sendMessage).not.toHaveBeenCalled();
+
+      process.env = originalEnv;
+    });
+  });
+
 });

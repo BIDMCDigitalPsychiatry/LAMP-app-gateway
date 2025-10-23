@@ -2,7 +2,8 @@ import { UUID } from "node:crypto"
 import { ActivityReminderNoteParams } from "./messages/activity-reminder-note.dto"
 import { MessageReceivedNoteParams } from "./messages/message-received-note.dto"
 import { WelcomeNoteParams } from "./messages/welcome-note.dto"
-import { ApnsPriority } from "./providers/apple-push-notification.service"
+import { ApnsOptions } from "./providers/apple-push-notification.service"
+import { SesOptions } from "./providers/aws-email.service"
 
 export type ServiceKey = "apns" | "firebase"
 interface NotificationDestinationBase {
@@ -10,6 +11,7 @@ interface NotificationDestinationBase {
 }
 
 export type PhoneNumber = string
+export type Email = string
 type ApnsToken = string
 type FirebaseToken = string
 
@@ -32,8 +34,13 @@ export interface Message {
   readonly type: string;
   readonly title: string;
   readonly body: string;
-  readonly apnsExpiry: number;
-  readonly apnsPriority: ApnsPriority;
+  readonly expiresAt: number; // Unix Timestamp (seconds since midnight 1/1/1970, utc)
+  readonly opts: MessageOptions
+}
+
+export interface MessageOptions {
+  apns?: ApnsOptions,
+  ses?: SesOptions 
 }
 
 export interface IMessagingService {
@@ -52,3 +59,12 @@ export interface MessageDispatchResult {
   vendorMessageId: string | undefined;
   successful: boolean
 }
+
+// -- { Utility Types } -------------------------------------------------------
+
+export type JSONValue =
+  | string
+  | number
+  | boolean
+  | { [key: string]: JSONValue } // JSONObject
+  | Array<JSONValue>;
