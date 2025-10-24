@@ -71,6 +71,8 @@ export const schema = Joi.object({
 
   AWS_SES_EMAIL_ADDR_SENDER: Joi.string().required().email(),
 
+  AWS_SES_TEMPLATE_SUFFIX: Joi.string().required(),
+
   AWS_SMS_CONFIG_SET_NAME: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
     'any.required': 'AWS_SMS_CONFIG_SET_NAME environment variable is required',
     'string.pattern.base': 'AWS_SMS_CONFIG_SET_NAME must be a end-user messaging configuration set name (e.g., lemp-dev-cloudwatch)'

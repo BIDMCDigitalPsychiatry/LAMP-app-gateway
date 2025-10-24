@@ -7,6 +7,7 @@ export default registerAs('aws-ses', (): AwsEmailServiceConfig => {
     AWS_SES_REGION,
     AWS_SES_EMAIL_ADDR_REPLY_TO,
     AWS_SES_EMAIL_ADDR_SENDER,
+    AWS_SES_TEMPLATE_SUFFIX
     // AWS_SES_,
   } = process.env;
 
@@ -16,5 +17,6 @@ export default registerAs('aws-ses', (): AwsEmailServiceConfig => {
     region: AWS_SES_REGION!,
     replyToAddress: AWS_SES_EMAIL_ADDR_REPLY_TO!,
     senderEmailAddress: AWS_SES_EMAIL_ADDR_SENDER!,
+    templateSuffix: AWS_SES_TEMPLATE_SUFFIX!,
   }
 })

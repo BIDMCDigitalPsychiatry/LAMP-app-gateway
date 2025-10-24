@@ -8,7 +8,8 @@ describe('AwsEmailService', () => {
   const mockAwsConfig: AwsEmailServiceConfig = {
     region: 'us-east-1',
     senderEmailAddress: 'test-sender@example.com',
-    replyToAddress: 'test-replyto@example.com'
+    replyToAddress: 'test-replyto@example.com',
+    templateSuffix: '-example'
   };
 
 

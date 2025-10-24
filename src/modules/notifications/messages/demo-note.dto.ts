@@ -24,7 +24,8 @@ export class DemoNote extends BaseMessage implements Message {
       templateName: "DEMO_EMAIL",
       templateData: {
         name: "Demo User",
-        date: getCurrentDatetimeString()
+        date: getCurrentDatetimeString(),
+        favoriteanimal: "unknown"
       }
     }
   }

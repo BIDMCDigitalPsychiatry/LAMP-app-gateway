@@ -7,7 +7,8 @@ import { invariant } from "../../../utils/invariant";
 export interface AwsEmailServiceConfig {
   region: string,
   senderEmailAddress: Email,
-  replyToAddress: Email
+  replyToAddress: Email,
+  templateSuffix: string,
 }
 
 function isEmailable(message: Message) : boolean {
@@ -25,6 +26,7 @@ export class AwsEmailService {
     private readonly client: SESClient;
     private readonly senderEmailAddress: Email;
     private readonly replyToAddress: Email;
+    private readonly templateSuffix: string;
   
     private readonly logger = new Logger(AwsEmailService.name);
   
@@ -39,6 +41,7 @@ export class AwsEmailService {
       this.client = new SESClient(clientConfig)
       this.senderEmailAddress = config.senderEmailAddress
       this.replyToAddress = config.replyToAddress
+      this.templateSuffix = config.templateSuffix
     }
   
   
@@ -56,7 +59,7 @@ export class AwsEmailService {
         Destination: {
           ToAddresses: [email]
         },
-        Template: message.opts.ses!.templateName,
+        Template: `${message.opts.ses!.templateName}${this.templateSuffix}`,
         TemplateData: JSON.stringify(message.opts.ses!.templateData)
       }
   
