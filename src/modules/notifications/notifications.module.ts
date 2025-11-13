@@ -7,6 +7,9 @@ import { GenericPushNotificationsController } from './controllers/generic-push-n
 import { OneTimePasswordsController } from './controllers/one-time-passwords.controller';
 import { AwsEndUserMessagingService } from './providers/aws-end-user-messaging.service';
 import { AwsEmailService } from './providers/aws-email.service';
+import { OtpManagerService } from './services/otp/otp-manager.service';
+import { OtpStorageService } from './services/otp/otp-storage.service';
+import { OtpService } from './services/otp/otp.service';
 
 @Module({
   imports: [],
@@ -16,7 +19,10 @@ import { AwsEmailService } from './providers/aws-email.service';
     ApplePushNotificationService,
     DispatcherService,
     AwsEndUserMessagingService,
-    AwsEmailService
+    AwsEmailService,
+    OtpService,
+    OtpManagerService,
+    OtpStorageService
   ],
   exports: [
   ],
