@@ -182,35 +182,35 @@ describe('AppController (e2e)', () => {
     });
 
     describe('Authentication tests', () => {
-      it('/demo/test-apns (POST) should require authentication', () => {
+      it('/v1/demo/test-apns (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-apns')
+          .post('/v1/demo/test-apns')
           .expect(403);
       });
 
-      it('/demo/test-firebase (POST) should require authentication', () => {
+      it('/v1/demo/test-firebase (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-firebase')
+          .post('/v1/demo/test-firebase')
           .expect(403);
       });
 
-      it('/demo/test-sms (POST) should require authentication', () => {
+      it('/v1/demo/test-sms (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-sms')
+          .post('/v1/demo/test-sms')
           .expect(403);
       });
 
-      it('/demo/test-email (POST) should require authentication', () => {
+      it('/v1/demo/test-email (POST) should require authentication', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-email')
+          .post('/v1/demo/test-email')
           .expect(403);
       });
     });
 
     describe('With authentication', () => {
-      it('/demo/test-apns (POST) should return 403 when device ID not configured', () => {
+      it('/v1/demo/test-apns (POST) should return 403 when device ID not configured', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-apns')
+          .post('/v1/demo/test-apns')
           .set(TestUtils.createAuthHeader())
           .expect(403)
           .expect((res: any) => {
@@ -219,9 +219,9 @@ describe('AppController (e2e)', () => {
           });
       });
 
-      it('/demo/test-firebase (POST) should return 403 when device ID not configured', () => {
+      it('/v1/demo/test-firebase (POST) should return 403 when device ID not configured', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-firebase')
+          .post('/v1/demo/test-firebase')
           .set(TestUtils.createAuthHeader())
           .expect(403)
           .expect((res: any) => {
@@ -230,9 +230,9 @@ describe('AppController (e2e)', () => {
           });
       });
 
-      it('/demo/test-email (POST) should return 403 when email address not configured', () => {
+      it('/v1/demo/test-email (POST) should return 403 when email address not configured', () => {
         return request(notifApp.getHttpServer())
-          .post('/demo/test-email')
+          .post('/v1/demo/test-email')
           .set(TestUtils.createAuthHeader())
           .expect(403)
           .expect((res: any) => {
@@ -300,9 +300,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('APNS Integration', () => {
-        it('POST /demo/test-apns should make HTTP request and call APNS service with correct device token', async () => {
+        it('POST /v1/demo/test-apns should make HTTP request and call APNS service with correct device token', async () => {
           const response = await request(integrationApp.getHttpServer())
-            .post('/demo/test-apns')
+            .post('/v1/demo/test-apns')
             .set(TestUtils.createAuthHeader())
             .expect(201)
             .expect('ok');
@@ -321,14 +321,14 @@ describe('AppController (e2e)', () => {
           expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
         });
 
-        it('POST /generic/welcome should call APNS sendMessage with correct arguments', async () => {
+        it('POST /v1/generic/welcome should call APNS sendMessage with correct arguments', async () => {
           const payload = {
             destination: { service: 'apns', token: 'custom-ios-token' },
             options: {}
           };
 
           await request(integrationApp.getHttpServer())
-            .post('/generic/welcome')
+            .post('/v1/generic/welcome')
             .set(TestUtils.createAuthHeader())
             .send(payload)
             .expect(201)
@@ -348,14 +348,14 @@ describe('AppController (e2e)', () => {
           expect(mockFirebaseService.sendMessage).not.toHaveBeenCalled();
         });
 
-        it('POST /generic/activity-reminder should call APNS sendMessage with correct arguments', async () => {
+        it('POST /v1/generic/activity-reminder should call APNS sendMessage with correct arguments', async () => {
           const payload = {
             destination: { service: 'apns', token: 'activity-ios-token' },
             options: {}
           };
 
           await request(integrationApp.getHttpServer())
-            .post('/generic/activity-reminder')
+            .post('/v1/generic/activity-reminder')
             .set(TestUtils.createAuthHeader())
             .send(payload)
             .expect(201)
@@ -371,14 +371,14 @@ describe('AppController (e2e)', () => {
           );
         });
 
-        it('POST /generic/new-message should call APNS sendMessage with correct arguments', async () => {
+        it('POST /v1/generic/new-message should call APNS sendMessage with correct arguments', async () => {
           const payload = {
             destination: { service: 'apns', token: 'message-ios-token' },
             options: {}
           };
 
           await request(integrationApp.getHttpServer())
-            .post('/generic/new-message')
+            .post('/v1/generic/new-message')
             .set(TestUtils.createAuthHeader())
             .send(payload)
             .expect(201)
@@ -396,9 +396,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('Firebase Integration', () => {
-        it('POST /demo/test-firebase should make HTTP request and call Firebase service with correct device token', async () => {
+        it('POST /v1/demo/test-firebase should make HTTP request and call Firebase service with correct device token', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/demo/test-firebase')
+            .post('/v1/demo/test-firebase')
             .set(TestUtils.createAuthHeader())
             .expect(201)
             .expect('ok');
@@ -417,14 +417,14 @@ describe('AppController (e2e)', () => {
           expect(mockApnsService.sendMessage).not.toHaveBeenCalled();
         });
 
-        it('POST /generic/welcome should call Firebase sendMessage with correct arguments', async () => {
+        it('POST /v1/generic/welcome should call Firebase sendMessage with correct arguments', async () => {
           const payload = {
             destination: { service: 'firebase', token: 'custom-android-token' },
             options: {}
           };
 
           await request(integrationApp.getHttpServer())
-            .post('/generic/welcome')
+            .post('/v1/generic/welcome')
             .set(TestUtils.createAuthHeader())
             .send(payload)
             .expect(201)
@@ -445,9 +445,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('SMS Integration', () => {
-        it('POST /demo/test-sms should make HTTP request and call AWS SMS service with simulator phone number', async () => {
+        it('POST /v1/demo/test-sms should make HTTP request and call AWS SMS service with simulator phone number', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/demo/test-sms')
+            .post('/v1/demo/test-sms')
             .set(TestUtils.createAuthHeader())
             .expect(201)
             .expect('ok');
@@ -469,9 +469,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('Email Integration', () => {
-        it('POST /demo/test-email should make HTTP request and call AWS Email service with demo email address', async () => {
+        it('POST /v1/demo/test-email should make HTTP request and call AWS Email service with demo email address', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/demo/test-email')
+            .post('/v1/demo/test-email')
             .set(TestUtils.createAuthHeader())
             .expect(201)
             .expect('ok');
@@ -494,9 +494,9 @@ describe('AppController (e2e)', () => {
       });
 
       describe('Validation tests', () => {
-        it('POST /generic/welcome should reject empty body', async () => {
+        it('POST /v1/generic/welcome should reject empty body', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/generic/welcome')
+            .post('/v1/generic/welcome')
             .set(TestUtils.createAuthHeader())
             .send({})
             .expect(400)
@@ -507,9 +507,9 @@ describe('AppController (e2e)', () => {
             });
         });
 
-        it('POST /generic/welcome should reject missing destination field', async () => {
+        it('POST /v1/generic/welcome should reject missing destination field', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/generic/welcome')
+            .post('/v1/generic/welcome')
             .set(TestUtils.createAuthHeader())
             .send({ options: {} })
             .expect(400)
@@ -520,9 +520,9 @@ describe('AppController (e2e)', () => {
             });
         });
 
-        it('POST /generic/welcome should reject invalid destination service', async () => {
+        it('POST /v1/generic/welcome should reject invalid destination service', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/generic/welcome')
+            .post('/v1/generic/welcome')
             .set(TestUtils.createAuthHeader())
             .send({ 
               destination: { service: 'invalid', token: 'test-token' },
@@ -535,9 +535,9 @@ describe('AppController (e2e)', () => {
             });
         });
 
-        it('POST /generic/welcome should reject missing token in destination', async () => {
+        it('POST /v1/generic/welcome should reject missing token in destination', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/generic/welcome')
+            .post('/v1/generic/welcome')
             .set(TestUtils.createAuthHeader())
             .send({ 
               destination: { service: 'apns' },
@@ -551,17 +551,17 @@ describe('AppController (e2e)', () => {
             });
         });
 
-        it('POST /generic/activity-reminder should reject empty body', async () => {
+        it('POST /v1/generic/activity-reminder should reject empty body', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/generic/activity-reminder')
+            .post('/v1/generic/activity-reminder')
             .set(TestUtils.createAuthHeader())
             .send({})
             .expect(400);
         });
 
-        it('POST /generic/new-message should reject empty body', async () => {
+        it('POST /v1/generic/new-message should reject empty body', async () => {
           await request(integrationApp.getHttpServer())
-            .post('/generic/new-message')
+            .post('/v1/generic/new-message')
             .set(TestUtils.createAuthHeader())
             .send({})
             .expect(400);
@@ -574,7 +574,7 @@ describe('AppController (e2e)', () => {
   describe('Validation error handling', () => {
     it('should return detailed validation errors for missing required fields', () => {
       return request(app.getHttpServer())
-        .post('/generic/welcome')
+        .post('/v1/generic/welcome')
         .set(TestUtils.createAuthHeader())
         .send({})
         .expect(400)
@@ -593,7 +593,7 @@ describe('AppController (e2e)', () => {
 
     it('should return detailed validation errors for invalid field types', () => {
       return request(app.getHttpServer())
-        .post('/generic/welcome')
+        .post('/v1/generic/welcome')
         .set(TestUtils.createAuthHeader())
         .send({
           destination: {
@@ -619,7 +619,7 @@ describe('AppController (e2e)', () => {
 
     it('should return detailed validation errors for discriminated union mismatch', () => {
       return request(app.getHttpServer())
-        .post('/generic/welcome')
+        .post('/v1/generic/welcome')
         .set(TestUtils.createAuthHeader())
         .send({
           destination: {
@@ -656,6 +656,396 @@ describe('AppController (e2e)', () => {
         .get('/unknown-route')
         .set(TestUtils.createAuthHeader())
         .expect(404);
+    });
+  });
+
+  describe('One-Time Password (OTP) endpoints', () => {
+    let otpApp: INestApplication;
+    let mockOtpService: any;
+    let mockOtpStorageService: any;
+    let mockOtpManagerService: any;
+    let mockSmsService: any;
+    let mockEmailService: any;
+
+    beforeAll(async () => {
+      // Create mock services for OTP functionality
+      mockOtpService = {
+        generateOneTimePassword: jest.fn().mockResolvedValue({
+          code: '123456',
+          hash: '$argon2id$v=19$m=65536,t=3,p=4$test-salt$test-hash',
+          exp: Date.now() + 15 * 60 * 1000,
+        }),
+        verifyOneTimePassword: jest.fn().mockResolvedValue(true),
+      };
+
+      mockOtpStorageService = {
+        fetch: jest.fn().mockResolvedValue('$argon2id$v=19$m=65536,t=3,p=4$test-salt$test-hash'),
+        save: jest.fn().mockResolvedValue(undefined),
+        removeAllFor: jest.fn().mockResolvedValue(undefined),
+      };
+
+      mockOtpManagerService = {
+        sendOneTimePasswordViaEmail: jest.fn().mockResolvedValue(undefined),
+        sendOneTimePasswordViaSms: jest.fn().mockResolvedValue(undefined),
+        validateOneTimePassword: jest.fn().mockResolvedValue(true),
+      };
+
+      mockSmsService = {
+        sendMessage: jest.fn().mockResolvedValue({
+          messageId: 'test-message-id',
+          vendorMessageId: 'aws-sms-id-123',
+          successful: true,
+        }),
+      };
+
+      mockEmailService = {
+        sendMessage: jest.fn().mockResolvedValue({
+          messageId: 'test-message-id',
+          vendorMessageId: 'ses-message-id-123',
+          successful: true,
+        }),
+      };
+
+      const { OtpService } = await import('../src/modules/notifications/services/one-time-password/otp.service');
+      const { OtpStorageService } = await import('../src/modules/notifications/services/one-time-password/otp-storage.service');
+      const { OtpManagerService } = await import('../src/modules/notifications/services/one-time-password/otp-manager.service');
+
+      const moduleFixture: TestingModule = await Test.createTestingModule({
+        imports: [AppModule],
+      })
+        .overrideProvider(ConfigService)
+        .useValue(TestUtils.createMockConfigService())
+        .overrideProvider(FirebaseMessagingService)
+        .useValue(TestUtils.mocks.firebaseService)
+        .overrideProvider(ApplePushNotificationService)
+        .useValue(TestUtils.mocks.apnsService)
+        .overrideProvider(AwsEndUserMessagingService)
+        .useValue(mockSmsService)
+        .overrideProvider(AwsEmailService)
+        .useValue(mockEmailService)
+        .overrideProvider(OtpService)
+        .useValue(mockOtpService)
+        .overrideProvider(OtpStorageService)
+        .useValue(mockOtpStorageService)
+        .overrideProvider(OtpManagerService)
+        .useValue(mockOtpManagerService)
+        .compile();
+
+      otpApp = moduleFixture.createNestApplication();
+      await otpApp.init();
+    });
+
+    afterAll(async () => {
+      if (otpApp) {
+        await otpApp.close();
+      }
+    });
+
+    beforeEach(() => {
+      // Reset mocks before each test
+      jest.clearAllMocks();
+    });
+
+    describe('Authentication tests', () => {
+      it('POST /v1/otp/email should require authentication', () => {
+        return request(otpApp.getHttpServer())
+          .post('/v1/otp/email')
+          .send({ email: 'test@example.com' })
+          .expect(403);
+      });
+
+      it('POST /v1/otp/text-message should require authentication', () => {
+        return request(otpApp.getHttpServer())
+          .post('/v1/otp/text-message')
+          .send({ phoneNumber: '+12345678901' })
+          .expect(403);
+      });
+
+      it('POST /v1/otp/verify should require authentication', () => {
+        return request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .send({ identifier: 'test@example.com', code: '123456' })
+          .expect(403);
+      });
+    });
+
+    describe('Send OTP via Email', () => {
+      it('should send OTP via email with valid email address', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/email')
+          .set(TestUtils.createAuthHeader())
+          .send({ email: 'test@example.com' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaEmail).toHaveBeenCalledWith('test@example.com');
+        expect(mockOtpManagerService.sendOneTimePasswordViaEmail).toHaveBeenCalledTimes(1);
+      });
+
+      it('should reject invalid email format', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/email')
+          .set(TestUtils.createAuthHeader())
+          .send({ email: 'not-an-email' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaEmail).not.toHaveBeenCalled();
+      });
+
+      it('should reject missing email field', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/email')
+          .set(TestUtils.createAuthHeader())
+          .send({})
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaEmail).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Send OTP via SMS', () => {
+      it('should send OTP via SMS with valid E.164 phone number', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/text-message')
+          .set(TestUtils.createAuthHeader())
+          .send({ phoneNumber: '+12345678901' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaSms).toHaveBeenCalledWith('+12345678901');
+        expect(mockOtpManagerService.sendOneTimePasswordViaSms).toHaveBeenCalledTimes(1);
+      });
+
+      it('should reject invalid phone number format', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/text-message')
+          .set(TestUtils.createAuthHeader())
+          .send({ phoneNumber: '1234567890' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaSms).not.toHaveBeenCalled();
+      });
+
+      it('should reject missing phoneNumber field', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/text-message')
+          .set(TestUtils.createAuthHeader())
+          .send({})
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaSms).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Verify OTP', () => {
+      it('should return ok when OTP is valid with email identifier', async () => {
+        mockOtpManagerService.validateOneTimePassword.mockResolvedValue(true);
+
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'test@example.com', code: '123456' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledWith('test@example.com', '123456');
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledTimes(1);
+      });
+
+      it('should return ok when OTP is valid with phone number identifier', async () => {
+        mockOtpManagerService.validateOneTimePassword.mockResolvedValue(true);
+
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: '+12345678901', code: '654321' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledWith('+12345678901', '654321');
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledTimes(1);
+      });
+
+      it('should return fail when OTP is invalid', async () => {
+        mockOtpManagerService.validateOneTimePassword.mockResolvedValue(false);
+
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'test@example.com', code: '999999' })
+          .expect(201)
+          .expect('fail');
+
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledWith('test@example.com', '999999');
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledTimes(1);
+      });
+
+      it('should reject code that is not 6 digits', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'test@example.com', code: '123' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.validateOneTimePassword).not.toHaveBeenCalled();
+      });
+
+      it('should reject code with non-numeric characters', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'test@example.com', code: 'abcdef' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.validateOneTimePassword).not.toHaveBeenCalled();
+      });
+
+      it('should reject invalid identifier format', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'not-email-or-phone', code: '123456' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.validateOneTimePassword).not.toHaveBeenCalled();
+      });
+
+      it('should reject missing identifier field', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ code: '123456' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.validateOneTimePassword).not.toHaveBeenCalled();
+      });
+
+      it('should reject missing code field', async () => {
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'test@example.com' })
+          .expect(400)
+          .expect((res: any) => {
+            expect(res.body).toHaveProperty('statusCode', 400);
+            expect(res.body).toHaveProperty('message');
+            expect(res.body.message).toContain('Validation failed');
+          });
+
+        expect(mockOtpManagerService.validateOneTimePassword).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Complete OTP flow integration', () => {
+      it('should complete full email OTP flow: send, then verify', async () => {
+        // Step 1: Send OTP via email
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/email')
+          .set(TestUtils.createAuthHeader())
+          .send({ email: 'integration@example.com' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaEmail).toHaveBeenCalledWith('integration@example.com');
+
+        // Step 2: Verify the OTP
+        mockOtpManagerService.validateOneTimePassword.mockResolvedValue(true);
+
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'integration@example.com', code: '123456' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledWith('integration@example.com', '123456');
+      });
+
+      it('should complete full SMS OTP flow: send, then verify', async () => {
+        // Step 1: Send OTP via SMS
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/text-message')
+          .set(TestUtils.createAuthHeader())
+          .send({ phoneNumber: '+19876543210' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.sendOneTimePasswordViaSms).toHaveBeenCalledWith('+19876543210');
+
+        // Step 2: Verify the OTP
+        mockOtpManagerService.validateOneTimePassword.mockResolvedValue(true);
+
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: '+19876543210', code: '654321' })
+          .expect(201)
+          .expect('ok');
+
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledWith('+19876543210', '654321');
+      });
+
+      it('should handle incorrect OTP verification after sending', async () => {
+        // Step 1: Send OTP
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/email')
+          .set(TestUtils.createAuthHeader())
+          .send({ email: 'wrongcode@example.com' })
+          .expect(201)
+          .expect('ok');
+
+        // Step 2: Try to verify with wrong code
+        mockOtpManagerService.validateOneTimePassword.mockResolvedValue(false);
+
+        await request(otpApp.getHttpServer())
+          .post('/v1/otp/verify')
+          .set(TestUtils.createAuthHeader())
+          .send({ identifier: 'wrongcode@example.com', code: '000000' })
+          .expect(201)
+          .expect('fail');
+
+        expect(mockOtpManagerService.validateOneTimePassword).toHaveBeenCalledWith('wrongcode@example.com', '000000');
+      });
     });
   });
 });

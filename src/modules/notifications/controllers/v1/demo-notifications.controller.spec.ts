@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DemoNotificationsController } from './demo-notifications.controller';
-import { DispatcherService } from '../dispatcher.service';
-import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../providers/aws-end-user-messaging.service';
-import { DemoNote } from '../messages/demo-note.dto';
-import { AwsEmailService } from '../providers/aws-email.service';
+import { DispatcherService } from '../../dispatcher.service';
+import { AwsEndUserMessagingService, SIMULATOR_PHONE_NUMBERS } from '../../providers/aws-end-user-messaging.service';
+import { DemoNote } from '../../messages/demo-note.dto';
+import { AwsEmailService } from '../../providers/aws-email.service';
 
 describe('DemoNotificationsController', () => {
   let controller: DemoNotificationsController;

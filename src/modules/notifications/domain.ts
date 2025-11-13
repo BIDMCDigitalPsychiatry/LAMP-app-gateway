@@ -60,6 +60,10 @@ export interface MessageDispatchResult {
   successful: boolean
 }
 
+// -- { One Time Password Types } ---------------------------------------------
+
+export type OneTimePasswordIdentifier = Email | PhoneNumber
+
 // -- { Utility Types } -------------------------------------------------------
 
 export type JSONValue =
@@ -68,3 +72,7 @@ export type JSONValue =
   | boolean
   | { [key: string]: JSONValue } // JSONObject
   | Array<JSONValue>;
+
+export type Maybe<T> = NonNullable<T> | undefined;
+
+export type UnixEpochSeconds = number;

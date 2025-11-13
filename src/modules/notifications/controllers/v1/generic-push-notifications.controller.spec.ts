@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GenericPushNotificationsController } from './generic-push-notifications.controller';
-import { DispatcherService } from '../dispatcher.service';
+import { DispatcherService } from '../../dispatcher.service';
 
 describe('GenericPushNotificationsController', () => {
   let controller: GenericPushNotificationsController;
