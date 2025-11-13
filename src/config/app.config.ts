@@ -88,6 +88,16 @@ export const schema = Joi.object({
     'string.pattern.base': 'AWS_SMS_REGION must be a valid aws region (e.g., us-east-2)'
   }),
 
+  AWS_DYNAMO_OTP_REGION: Joi.string().required().pattern(/^[a-zA-Z0-9.-]+$/).messages({
+    'any.required': 'AWS_DYNAMO_OTP_REGION environment variable is required',
+    'string.pattern.base': 'AWS_DYNAMO_OTP_REGION must be a valid aws region (e.g., us-east-2)'
+  }),
+
+  AWS_DYNAMO_OTP_TABLE_NAME: Joi.string().required().pattern(/^[a-zA-Z0-9._-]+$/).messages({
+    'any.required': 'AWS_DYNAMO_OTP_TABLE_NAME environment variable is required'
+    // 'string.pattern.base': 'AWS_DYNAMO_OTP_TABLE_NAME must be a valid dynamo table name'
+  }),
+
   // Firebase configuration
   FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: Joi.string().required().base64().messages({
     'any.required': 'FIREBASE_SERVICE_ACCOUNT_JSON_BASE64 environment variable is required',

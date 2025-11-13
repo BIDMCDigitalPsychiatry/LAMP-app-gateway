@@ -5,9 +5,10 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SystemModule } from './modules/system/system.module';
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import apnsConfig from './modules/notifications/config/apns.config';
-import firebaseConfig from './modules/notifications/config/firebase.config';
-import awsSmsConfig from './modules/notifications/config/aws-sms.config';
 import awsSesConfig from './modules/notifications/config/aws-ses.config';
+import awsSmsConfig from './modules/notifications/config/aws-sms.config';
+import dynamoOtpConfig from './modules/notifications/config/dynamo-otp.config';
+import firebaseConfig from './modules/notifications/config/firebase.config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ApiKeyGuard } from './guards/api-key.guard';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
@@ -28,10 +29,11 @@ import { randomUUID } from 'node:crypto';
       ignoreEnvFile: true,
       load: [
         apnsConfig,
-        configuration,
-        firebaseConfig,
-        awsSmsConfig,
         awsSesConfig,
+        awsSmsConfig,
+        configuration,
+        dynamoOtpConfig,
+        firebaseConfig,
       ],
       validationSchema: schema,
       validationOptions: {
