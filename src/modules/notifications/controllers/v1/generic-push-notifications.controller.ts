@@ -1,8 +1,8 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { DispatcherService } from '../dispatcher.service';
-import { SendActivityReminderNotePayload, SendMessageReceivedNotePayload, SendWelcomeNotePayload } from '../schemas/notification-controller-requests';
+import { DispatcherService } from '../../dispatcher.service';
+import { SendActivityReminderNotePayload, SendMessageReceivedNotePayload, SendWelcomeNotePayload } from '../../schemas/notification-controller-requests';
 
-@Controller('generic')
+@Controller('v1/generic')
 export class GenericPushNotificationsController {
 
   constructor(

@@ -5,9 +5,9 @@ import { FirebaseMessagingService } from './modules/notifications/providers/fire
 import { ApplePushNotificationService } from './modules/notifications/providers/apple-push-notification.service';
 import { SystemController } from './modules/system/system.controller';
 import { TestUtils } from './test/test-utils';
-import { DemoNotificationsController } from './modules/notifications/controllers/demo-notifications.controller';
-import { GenericPushNotificationsController } from './modules/notifications/controllers/generic-push-notifications.controller';
-import { OneTimePasswordsController } from './modules/notifications/controllers/one-time-passwords.controller';
+import { DemoNotificationsController } from './modules/notifications/controllers/v1/demo-notifications.controller';
+import { GenericPushNotificationsController } from './modules/notifications/controllers/v1/generic-push-notifications.controller';
+import { OneTimePasswordsController } from './modules/notifications/controllers/v1/one-time-passwords.controller';
 
 describe('AppModule', () => {
   let module: TestingModule;

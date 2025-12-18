@@ -5,15 +5,24 @@ The app gateway server component for logging and push notifications.
 
 | Name  | Required | Description  |
 |---|---|---|
-| `SENTRY_DSN`   |   |   |
-| `SENTRY_ENV`   |   |   |
 | `API_KEYS`   | :heavy_check_mark:  | _Secret_. Comma-separated list of   |
-| `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64`  | :heavy_check_mark:  | _Secret_. A base64 encoded service account key. These keys start as json in cleartext and must be base64 encoded before setting. To generate the service account json file, follow  |
+| `APNS_BUNDLE_ID`   | :heavy_check_mark:  | The Apple app's bundle id (the reverse-dns style identifier) is used as the topic for push notifications.  |
+| `APNS_IS_PRODUCTION` | | Set to `true` if production APNs endpoints should be used. Else, `false` or not set. |
 | `APNS_KEY_FILE_BASE64`   | :heavy_check_mark:  | _Secret_. This is a base64-encoded .p8 key. See details below reguarding it's generation and encoding. |
 | `APNS_KEY_ID`   | :heavy_check_mark:  |   |
 | `APNS_TEAM_ID`   | :heavy_check_mark:  |   |
-| `APNS_BUNDLE_ID`   | :heavy_check_mark:  | The Apple app's bundle id (the reverse-dns style identifier) is used as the topic for push notifications.  |
-| `APNS_IS_PRODUCTION` | | Set to `true` if production APNs endpoints should be used. Else, `false` or not set. |
+| `AWS_DYNAMO_OTP_REGION`   | :heavy_check_mark:  | The region in which the one-time passwords dynamo table lives.  |
+| `AWS_DYNAMO_OTP_TABLE_NAME`   | :heavy_check_mark:  | The name of the one-time passwords dynamo table.  |
+| `AWS_SES_EMAIL_ADDR_REPLY_TO`   | :heavy_check_mark:  | The email address that should be automatically configured for replys to dispatch email messages. Usually a no-reply@ address.  |
+| `AWS_SES_EMAIL_ADDR_SENDER`   | :heavy_check_mark:  | The email address the end-user will see as the "From" address in their email client. Eg. `dev-sender@mail.dev.lamp.digital`. Note that this domain must be verified in AWS's SES. |
+| `AWS_SES_REGION`   | :heavy_check_mark:  | The region in which our SES resources are configured and the SES API requests should be directed.  |
+| `AWS_SES_TEMPLATE_SUFFIX`   | :heavy_check_mark:  | The suffix of email template strings. Each ECS service is only authorized to use templates that end in a specific suffix. That suffix should be match the SES template suffixes configured in terraform.  |
+| `AWS_SMS_CONFIG_SET_NAME`   | :heavy_check_mark:  | The name of the AWS End-User Messaging configuration set (rules) that should be used when dispatching SMS messages.  |
+| `AWS_SMS_ORIGINATION_IDENTITY`   | :heavy_check_mark:  | The ID of the End-User Messaging phone pool that should be used in dispatching SMS messages to end users. |
+| `AWS_SMS_REGION`   | :heavy_check_mark:  | The region in which out End-User Messaging resources are configured and the End-User API requests should be directed.  |
+| `FIREBASE_SERVICE_ACCOUNT_JSON_BASE64`  | :heavy_check_mark:  | _Secret_. A base64 encoded service account key. These keys start as json in cleartext and must be base64 encoded before setting. To generate the service account json file, follow  |
+| `SENTRY_DSN`   |   | The unique URL provided by Sentry used to route error events to the correct account. Leave empty to disable error event reporting to Sentry.  |
+| `SENTRY_ENV`   |   | The environment string that should be reported to Sentry for aggregation. Leave empty if Sentry error reporting is disabled.   |
 
 > [!NOTE] 
 > Variables ending in `_BASE64` are values that must be base64 encoded prior to being set in the environment or parameter store secrets. Typically these environment variables are files, such as google's serivce accounts or apns' certificate bundles.
